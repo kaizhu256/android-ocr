@@ -2618,9 +2618,6 @@ OnSharedPreferenceChangeListener {
     editTextPreferenceCharacterWhitelist = (EditTextPreference) getPreferenceScreen().findPreference(KEY_CHARACTER_WHITELIST);
     listPreferencePageSegmentationMode = (ListPreference) getPreferenceScreen().findPreference(KEY_PAGE_SEGMENTATION_MODE);
 
-    // Create the entries/entryvalues for the translation target language list.
-    initTranslationTargetList();
-
   }
 
   /**
@@ -2685,43 +2682,6 @@ OnSharedPreferenceChangeListener {
 
     }
 
-    // Update the languages available for translation based on the current translator selected.
-    if (key.equals(KEY_TRANSLATOR)) {
-      initTranslationTargetList();
-    }
-
-  }
-
-  /**
-   * Sets the list of available languages and the current target language for translation. Called
-   * when the key for the current translator is changed.
-   */
-  void initTranslationTargetList() {
-    // Set the preference for the target language code, in case we've just switched from Google
-    // to Bing, or Bing to Google.
-    String currentLanguageCode = sharedPreferences.getString(KEY_TARGET_LANGUAGE_PREFERENCE,
-      CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE);
-
-    // Get the name of our language
-    String currentLanguage = LanguageCodeHelper.getTranslationLanguageName(getBaseContext(),
-      currentLanguageCode);
-    String[] translators = getResources().getStringArray(R.array.translators);
-    String translator = sharedPreferences.getString(KEY_TRANSLATOR, CaptureActivity.DEFAULT_TRANSLATOR);
-    String newLanguageCode = "";
-    // Update the list of available languages for the currently-chosen translation API.
-    listPreferenceTargetLanguage.setEntries(R.array.translationtargetlanguagenames_microsoft);
-    listPreferenceTargetLanguage.setEntryValues(R.array.translationtargetiso6391_microsoft);
-
-    // Get the corresponding code for our language name
-    newLanguageCode = TranslatorBing.toLanguage(currentLanguage);
-
-    // Store the code as the target language preference
-    String newLanguageName = LanguageCodeHelper.getTranslationLanguageName(getBaseContext(),
-      newLanguageCode);
-    listPreferenceTargetLanguage.setValue(newLanguageName); // Set the radio button in the list
-    sharedPreferences.edit().putString(PreferencesActivity.KEY_TARGET_LANGUAGE_PREFERENCE,
-      newLanguageCode).commit();
-    listPreferenceTargetLanguage.setSummary(newLanguageName);
   }
 
   /**
@@ -2764,26 +2724,9 @@ OnSharedPreferenceChangeListener {
  * Delegates translation requests to the appropriate translation service.
  */
 class Translator {
-
   public static final String BAD_TRANSLATION_MSG = "[Translation unavailable]";
-
-  private Translator(Activity activity) {
-    // Private constructor to enforce noninstantiability
-  }
-
   static String translate(Activity activity, String sourceLanguageCode, String targetLanguageCode, String sourceText) {
-
-    // Check preferences to determine which translation API to use--Google, or Bing.
-    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
-    String api = prefs.getString(PreferencesActivity.KEY_TRANSLATOR, CaptureActivity.DEFAULT_TRANSLATOR);
-
-    // Delegate the translation based on the user's preference.
-
-    // Get the correct code for the source language for this translation service.
-    sourceLanguageCode = TranslatorBing.toLanguage(
-      LanguageCodeHelper.getTranslationLanguageName(activity.getBaseContext(), sourceLanguageCode));
-
-    return TranslatorBing.translate(sourceLanguageCode, targetLanguageCode, sourceText);
+    return TranslatorBing.translate("en", "zh-CHT", sourceText);
   }
 }
 
@@ -2792,8 +2735,6 @@ class Translator {
 
 class TranslatorBing {
   private static final String TAG = TranslatorBing.class.getSimpleName();
-  private static final String CLIENT_ID = "davidbranniganz-translate";
-  private static final String CLIENT_SECRET = "HxwO7LY6xkLB5EU9jWcR1MJWE0dI1AwMPTVBp13l+ek=";
 
   /**
    *  Translate using Microsoft Translate API
@@ -2803,8 +2744,8 @@ class TranslatorBing {
    * @return Translated text
    */
   static String translate(String sourceLanguageCode, String targetLanguageCode, String sourceText) {
-    Translate.setClientId(CLIENT_ID);
-    Translate.setClientSecret(CLIENT_SECRET);
+    Translate.setClientId("davidbranniganz-translate");
+    Translate.setClientSecret("HxwO7LY6xkLB5EU9jWcR1MJWE0dI1AwMPTVBp13l+ek=");
     try {
       Log.d(TAG, sourceLanguageCode + " -> " + targetLanguageCode);
       return Translate.execute(sourceText, Language.fromString(sourceLanguageCode),
