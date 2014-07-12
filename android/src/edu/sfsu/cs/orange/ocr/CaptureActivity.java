@@ -18,15 +18,6 @@
 package edu.sfsu.cs.orange.ocr;
 
 
-import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Paint.Align;
-import android.graphics.Point;
-import android.graphics.Rect;
-import android.graphics.Paint.Style;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -39,20 +30,20 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-
-import android.util.Log;
-import android.view.Gravity;
-import android.widget.Toast;
-
 import android.preference.PreferenceManager;
 import android.text.ClipboardManager;
 import android.text.SpannableStringBuilder;
@@ -1337,7 +1328,7 @@ class ViewfinderView extends View {
           for (int i = 0; i < regionBoundingBoxes.size(); i++) {
             paint.setAlpha(0xA0);
             paint.setColor(Color.MAGENTA);
-            paint.setStyle(Style.STROKE);
+            paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(1);
             rect = regionBoundingBoxes.get(i);
             canvas.drawRect(frame.left + rect.left * scaleX,
@@ -1352,7 +1343,7 @@ class ViewfinderView extends View {
           textlineBoundingBoxes = resultText.getTextlineBoundingBoxes();
           paint.setAlpha(0xA0);
           paint.setColor(Color.RED);
-          paint.setStyle(Style.STROKE);
+          paint.setStyle(Paint.Style.STROKE);
           paint.setStrokeWidth(1);
           for (int i = 0; i < textlineBoundingBoxes.size(); i++) {
             rect = textlineBoundingBoxes.get(i);
@@ -1367,7 +1358,7 @@ class ViewfinderView extends View {
           stripBoundingBoxes = resultText.getStripBoundingBoxes();
           paint.setAlpha(0xFF);
           paint.setColor(Color.YELLOW);
-          paint.setStyle(Style.STROKE);
+          paint.setStyle(Paint.Style.STROKE);
           paint.setStrokeWidth(1);
           for (int i = 0; i < stripBoundingBoxes.size(); i++) {
             rect = stripBoundingBoxes.get(i);
@@ -1391,7 +1382,7 @@ class ViewfinderView extends View {
         if (DRAW_WORD_BOXES) {
           paint.setAlpha(0xFF);
           paint.setColor(0xFF00CCFF);
-          paint.setStyle(Style.STROKE);
+          paint.setStyle(Paint.Style.STROKE);
           paint.setStrokeWidth(1);
           for (int i = 0; i < wordBoundingBoxes.size(); i++) {
             // Draw a bounding box around the word
@@ -1422,7 +1413,7 @@ class ViewfinderView extends View {
               // Draw a white background around each word
               rect = wordBoundingBoxes.get(i);
               paint.setColor(Color.WHITE);
-              paint.setStyle(Style.FILL);
+              paint.setStyle(Paint.Style.FILL);
               if (DRAW_TRANSPARENT_WORD_BACKGROUNDS) {
                 // Higher confidence = more opaque, less transparent background
                 paint.setAlpha(wordConfidences[i] * 255 / 100);
@@ -1438,7 +1429,7 @@ class ViewfinderView extends View {
               paint.setColor(Color.BLACK);
               paint.setAlpha(0xFF);
               paint.setAntiAlias(true);
-              paint.setTextAlign(Align.LEFT);
+              paint.setTextAlign(Paint.Align.LEFT);
 
               // Adjust text size to fill rect
               paint.setTextSize(100);
@@ -1551,7 +1542,7 @@ class ViewfinderView extends View {
     }
     // Draw a two pixel solid border inside the framing rect
     paint.setAlpha(0);
-    paint.setStyle(Style.FILL);
+    paint.setStyle(Paint.Style.FILL);
     paint.setColor(frameColor);
     canvas.drawRect(frame.left, frame.top, frame.right + 1, frame.top + 2, paint);
     canvas.drawRect(frame.left, frame.top + 2, frame.left + 2, frame.bottom - 1, paint);
