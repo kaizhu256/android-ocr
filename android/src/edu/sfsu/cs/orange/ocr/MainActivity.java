@@ -1242,9 +1242,6 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
 class ViewfinderView extends View {
   //private static final long ANIMATION_DELAY = 80L;
 
-  /** Flag to draw boxes representing the results from TessBaseAPI::GetWords(). */
-  static final boolean DRAW_WORD_BOXES = true;
-
   private CameraManager cameraManager;
   private final Paint paint;
   private final int maskColor;
@@ -1309,24 +1306,6 @@ class ViewfinderView extends View {
 
         float scaleX = frame.width() / (float) previewFrame.width();
         float scaleY = frame.height() / (float) previewFrame.height();
-
-        if (DRAW_WORD_BOXES) {
-          // Split the text into words
-          wordBoundingBoxes = resultText.getWordBoundingBoxes();
-          paint.setAlpha(0xFF);
-          paint.setColor(0xFF00CCFF);
-          paint.setStyle(Paint.Style.STROKE);
-          paint.setStrokeWidth(1);
-          for (int i = 0; i < wordBoundingBoxes.size(); i++) {
-            // Draw a bounding box around the word
-            rect = wordBoundingBoxes.get(i);
-            canvas.drawRect(
-              frame.left + rect.left * scaleX,
-              frame.top + rect.top * scaleY,
-              frame.left + rect.right * scaleX,
-              frame.top + rect.bottom * scaleY, paint);
-          }
-        }
 
       }
 
