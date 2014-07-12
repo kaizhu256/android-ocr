@@ -23,7 +23,7 @@
                android:layout_width="fill_parent"
                android:layout_height="fill_parent"
                android:layout_centerInParent="true"/>
-     
+
   <edu.sfsu.cs.orange.ocr.ViewfinderView
       android:id="@+id/viewfinder_view"
       android:layout_width="fill_parent"
@@ -125,7 +125,7 @@
                     android:textSize="22sp"
                     android:paddingLeft="12dip"
                     android:autoLink="web"/>
-        
+
           <TextView android:id="@+id/translation_text_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -135,21 +135,21 @@
                     android:paddingLeft="12dip"
                     android:autoLink="web"
                     android:clickable="true"/>
-           
+
           <LinearLayout android:id="@+id/indeterminate_progress_indicator_view"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         >
-            
+
               <ProgressBar android:id="@+android:id/progress_small"
-		                   style="?android:attr/progressBarStyleSmall" 
+		                   style="?android:attr/progressBarStyleSmall"
 		                   android:layout_width="wrap_content"
                            android:layout_height="wrap_content"
-                           android:paddingLeft="12dip" 
+                           android:paddingLeft="12dip"
                            android:paddingTop="10dip"/>
           </LinearLayout>
-          
-          
+
+
         </LinearLayout>
 
       </ScrollView>
@@ -164,7 +164,7 @@
 
     <TextView android:id="@+id/status_view_top"
               android:layout_width="wrap_content"
-              android:layout_height="wrap_content"    
+              android:layout_height="wrap_content"
               android:layout_alignParentTop="true"
               android:background="#0000"
               android:text=""
@@ -172,8 +172,8 @@
               android:textSize="14sp"
               android:autoLink="web"
               android:clickable="true" />
- 
-    <edu.sfsu.cs.orange.ocr.camera.ShutterButton
+
+    <edu.sfsu.cs.orange.ocr.ShutterButton
               android:id="@+id/shutter_button"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
@@ -185,8 +185,8 @@
               android:layout_marginRight="8dip"
               android:layout_marginTop="8dip"
               android:scaleType="center"
-              android:visibility="gone" /> 
-     
+              android:visibility="gone" />
+
     <TextView android:id="@+id/status_view_bottom"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
@@ -195,25 +195,25 @@
               android:text=""
               android:textColor="@color/status_text"
               android:textSize="14sp"
-              android:autoLink="web"   
+              android:autoLink="web"
               android:clickable="true" />
-     
-     <!-- 
+
+     <!--
      <ToggleButton android:id="@+id/torch_button"
-		      android:layout_width="wrap_content" 
+		      android:layout_width="wrap_content"
 		      android:layout_height="wrap_content"
 		      android:background="@drawable/torch_button"
-		      android:clickable="true" 
+		      android:clickable="true"
 		      android:focusable="true"
 		      android:textOff=""
 		      android:textOn=""
-		      android:layout_alignParentRight="true" 
+		      android:layout_alignParentRight="true"
 		      android:layout_alignParentBottom="true"
-		      android:layout_marginRight="8dip" 
+		      android:layout_marginRight="8dip"
 		      android:layout_marginBottom="8dip"
 		      android:scaleType="center" />
      -->
-     
+
   </RelativeLayout>
 
 </FrameLayout>
