@@ -2148,7 +2148,7 @@ class CameraManager {
         throw new IOException();
       }
       camera = theCamera;
-      camera.setDisplayOrientation(90);
+      //!! camera.setDisplayOrientation(90);
     }
     camera.setPreviewDisplay(holder);
     if (!initialized) {
