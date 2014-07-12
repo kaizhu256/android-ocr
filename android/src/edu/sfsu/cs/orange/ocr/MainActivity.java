@@ -303,17 +303,9 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
       // Comment out the following block to test non-OCR functions without an SD card
 
       // Do OCR engine initialization, if necessary
-      boolean doNewInit = (baseApi == null) || !sourceLanguageCodeOcr.equals(previousSourceLanguageCodeOcr) ||
-        ocrEngineMode != previousOcrEngineMode;
+      boolean doNewInit = (baseApi == null) || !sourceLanguageCodeOcr.equals(previousSourceLanguageCodeOcr) || ocrEngineMode != previousOcrEngineMode;
       if (doNewInit) {
         // Initialize the OCR engine
-
-
-
-
-
-      //Log.d(TAG, "getStorageDirectory(): API level is " + Integer.valueOf(android.os.Build.VERSION.SDK_INT));
-
       String state = null;
       try {
         state = Environment.getExternalStorageState();
