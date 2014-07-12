@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package edu.sfsu.cs.orange.ocr;
 
 
@@ -101,996 +100,1002 @@ import com.google.android.glass.view.WindowUtils;
 public final class CaptureActivity extends Activity implements SurfaceHolder.Callback,
   ShutterButton.OnShutterButtonListener {
 
-  private static final String TAG = CaptureActivity.class.getSimpleName();
+    private static final String TAG = CaptureActivity.class.getSimpleName();
 
-  // Note: These constants will be overridden by any default values defined in preferences.xml.
+    // Note: These constants will be overridden by any default values defined in preferences.xml.
 
-  /** ISO 639-3 language code indicating the default recognition language. */
-  public static final String DEFAULT_SOURCE_LANGUAGE_CODE = "eng";
+    /** ISO 639-3 language code indicating the default recognition language. */
+    public static final String DEFAULT_SOURCE_LANGUAGE_CODE = "eng";
 
-  /** ISO 639-1 language code indicating the default target language for translation. */
-  public static final String DEFAULT_TARGET_LANGUAGE_CODE = "es";
+    /** ISO 639-1 language code indicating the default target language for translation. */
+    public static final String DEFAULT_TARGET_LANGUAGE_CODE = "es";
 
-  /** The default online machine translation service to use. */
-  public static final String DEFAULT_TRANSLATOR = "Google Translate";
+    /** The default online machine translation service to use. */
+    public static final String DEFAULT_TRANSLATOR = "Google Translate";
 
-  /** The default OCR engine to use. */
-  public static final String DEFAULT_OCR_ENGINE_MODE = "Tesseract";
+    /** The default OCR engine to use. */
+    public static final String DEFAULT_OCR_ENGINE_MODE = "Tesseract";
 
-  /** The default page segmentation mode to use. */
-  public static final String DEFAULT_PAGE_SEGMENTATION_MODE = "Auto";
+    /** The default page segmentation mode to use. */
+    public static final String DEFAULT_PAGE_SEGMENTATION_MODE = "Auto";
 
-  /** Whether to use autofocus by default. */
-  public static final boolean DEFAULT_TOGGLE_AUTO_FOCUS = true;
+    /** Whether to use autofocus by default. */
+    public static final boolean DEFAULT_TOGGLE_AUTO_FOCUS = true;
 
-  /** Whether to initially disable continuous-picture and continuous-video focus modes. */
-  public static final boolean DEFAULT_DISABLE_CONTINUOUS_FOCUS = true;
+    /** Whether to initially disable continuous-picture and continuous-video focus modes. */
+    public static final boolean DEFAULT_DISABLE_CONTINUOUS_FOCUS = true;
 
-  /** Whether to beep by default when the shutter button is pressed. */
-  public static final boolean DEFAULT_TOGGLE_BEEP = false;
+    /** Whether to beep by default when the shutter button is pressed. */
+    public static final boolean DEFAULT_TOGGLE_BEEP = false;
 
-  /** Whether to initially show a looping, real-time OCR display. */
-  public static final boolean DEFAULT_TOGGLE_CONTINUOUS = false;
+    /** Whether to initially show a looping, real-time OCR display. */
+    public static final boolean DEFAULT_TOGGLE_CONTINUOUS = false;
 
-  /** Whether to initially reverse the image returned by the camera. */
-  public static final boolean DEFAULT_TOGGLE_REVERSED_IMAGE = false;
+    /** Whether to initially reverse the image returned by the camera. */
+    public static final boolean DEFAULT_TOGGLE_REVERSED_IMAGE = false;
 
-  /** Whether to enable the use of online translation services be default. */
-  public static final boolean DEFAULT_TOGGLE_TRANSLATION = true;
+    /** Whether to enable the use of online translation services be default. */
+    public static final boolean DEFAULT_TOGGLE_TRANSLATION = true;
 
-  /** Whether the light should be initially activated by default. */
-  public static final boolean DEFAULT_TOGGLE_LIGHT = false;
+    /** Whether the light should be initially activated by default. */
+    public static final boolean DEFAULT_TOGGLE_LIGHT = false;
 
 
-  /** Flag to display the real-time recognition results at the top of the scanning screen. */
-  private static final boolean CONTINUOUS_DISPLAY_RECOGNIZED_TEXT = true;
+    /** Flag to display the real-time recognition results at the top of the scanning screen. */
+    private static final boolean CONTINUOUS_DISPLAY_RECOGNIZED_TEXT = true;
 
-  /** Flag to display recognition-related statistics on the scanning screen. */
-  private static final boolean CONTINUOUS_DISPLAY_METADATA = true;
+    /** Flag to display recognition-related statistics on the scanning screen. */
+    private static final boolean CONTINUOUS_DISPLAY_METADATA = true;
 
-  /** Flag to enable display of the on-screen shutter button. */
-  private static final boolean DISPLAY_SHUTTER_BUTTON = true;
+    /** Flag to enable display of the on-screen shutter button. */
+    private static final boolean DISPLAY_SHUTTER_BUTTON = true;
 
-  /** Languages for which Cube data is available. */
-  static final String[] CUBE_SUPPORTED_LANGUAGES = {
-    "ara", // Arabic
-    "eng", // English
-    "hin" // Hindi
-  };
+    /** Languages for which Cube data is available. */
+    static final String[] CUBE_SUPPORTED_LANGUAGES = {
+      "ara", // Arabic
+      "eng", // English
+      "hin" // Hindi
+    };
 
-  /** Languages that require Cube, and cannot run using Tesseract. */
-  private static final String[] CUBE_REQUIRED_LANGUAGES = {
-    "ara" // Arabic
-  };
+    /** Languages that require Cube, and cannot run using Tesseract. */
+    private static final String[] CUBE_REQUIRED_LANGUAGES = {
+      "ara" // Arabic
+    };
 
-  /** Resource to use for data file downloads. */
-  static final String DOWNLOAD_BASE = "http://tesseract-ocr.googlecode.com/files/";
+    /** Resource to use for data file downloads. */
+    static final String DOWNLOAD_BASE = "http://tesseract-ocr.googlecode.com/files/";
 
-  /** Download filename for orientation and script detection (OSD) data. */
-  static final String OSD_FILENAME = "tesseract-ocr-3.01.osd.tar";
+    /** Download filename for orientation and script detection (OSD) data. */
+    static final String OSD_FILENAME = "tesseract-ocr-3.01.osd.tar";
 
-  /** Destination filename for orientation and script detection (OSD) data. */
-  static final String OSD_FILENAME_BASE = "osd.traineddata";
+    /** Destination filename for orientation and script detection (OSD) data. */
+    static final String OSD_FILENAME_BASE = "osd.traineddata";
 
-  /** Minimum mean confidence score necessary to not reject single-shot OCR result. Currently unused. */
-  static final int MINIMUM_MEAN_CONFIDENCE = 0; // 0 means don't reject any scored results
+    /** Minimum mean confidence score necessary to not reject single-shot OCR result. Currently unused. */
+    static final int MINIMUM_MEAN_CONFIDENCE = 0; // 0 means don't reject any scored results
 
-  // Context menu
-  private static final int SETTINGS_ID = Menu.FIRST;
-  private static final int ABOUT_ID = Menu.FIRST + 1;
+    // Context menu
+    private static final int SETTINGS_ID = Menu.FIRST;
+    private static final int ABOUT_ID = Menu.FIRST + 1;
 
-  // Options menu, for copy to clipboard
-  private static final int OPTIONS_COPY_RECOGNIZED_TEXT_ID = Menu.FIRST;
-  private static final int OPTIONS_COPY_TRANSLATED_TEXT_ID = Menu.FIRST + 1;
-  private static final int OPTIONS_SHARE_RECOGNIZED_TEXT_ID = Menu.FIRST + 2;
-  private static final int OPTIONS_SHARE_TRANSLATED_TEXT_ID = Menu.FIRST + 3;
+    // Options menu, for copy to clipboard
+    private static final int OPTIONS_COPY_RECOGNIZED_TEXT_ID = Menu.FIRST;
+    private static final int OPTIONS_COPY_TRANSLATED_TEXT_ID = Menu.FIRST + 1;
+    private static final int OPTIONS_SHARE_RECOGNIZED_TEXT_ID = Menu.FIRST + 2;
+    private static final int OPTIONS_SHARE_TRANSLATED_TEXT_ID = Menu.FIRST + 3;
 
-  private CameraManager cameraManager;
-  private CaptureActivityHandler handler;
-  private ViewfinderView viewfinderView;
-  private SurfaceView surfaceView;
-  private SurfaceHolder surfaceHolder;
-  private TextView statusViewBottom;
-  private TextView statusViewTop;
-  private TextView ocrResultView;
-  private TextView translationView;
-  private View cameraButtonView;
-  private View resultView;
-  private View progressView;
-  private OcrResult lastResult;
-  private Bitmap lastBitmap;
-  private boolean hasSurface;
-  private BeepManager beepManager;
-  private TessBaseAPI baseApi; // Java interface for the Tesseract OCR engine
-  private String sourceLanguageCodeOcr; // ISO 639-3 language code
-  private String sourceLanguageReadable; // Language name, for example, "English"
-  private String sourceLanguageCodeTranslation; // ISO 639-1 language code
-  private String targetLanguageCodeTranslation; // ISO 639-1 language code
-  private String targetLanguageReadable; // Language name, for example, "English"
-  private int pageSegmentationMode = TessBaseAPI.PageSegMode.PSM_AUTO_OSD;
-  private int ocrEngineMode = TessBaseAPI.OEM_TESSERACT_ONLY;
-  private String characterBlacklist;
-  private String characterWhitelist;
-  private ShutterButton shutterButton;
-  private boolean isTranslationActive; // Whether we want to show translations
-  private boolean isContinuousModeActive; // Whether we are doing OCR in continuous mode
-  private SharedPreferences prefs;
-  private OnSharedPreferenceChangeListener listener;
-  private ProgressDialog dialog; // for initOcr - language download & unzip
-  private ProgressDialog indeterminateDialog; // also for initOcr - init OCR engine
-  private boolean isEngineReady;
-  private boolean isPaused;
-  private static boolean isFirstLaunch; // True if this is the first time the app is being run
+    private CameraManager cameraManager;
+    private CaptureActivityHandler handler;
+    private ViewfinderView viewfinderView;
+    private SurfaceView surfaceView;
+    private SurfaceHolder surfaceHolder;
+    private TextView statusViewBottom;
+    private TextView statusViewTop;
+    private TextView ocrResultView;
+    private TextView translationView;
+    private View cameraButtonView;
+    private View resultView;
+    private View progressView;
+    private OcrResult lastResult;
+    private Bitmap lastBitmap;
+    private boolean hasSurface;
+    private BeepManager beepManager;
+    private TessBaseAPI baseApi; // Java interface for the Tesseract OCR engine
+    private String sourceLanguageCodeOcr; // ISO 639-3 language code
+    private String sourceLanguageReadable; // Language name, for example, "English"
+    private String sourceLanguageCodeTranslation; // ISO 639-1 language code
+    private String targetLanguageCodeTranslation; // ISO 639-1 language code
+    private String targetLanguageReadable; // Language name, for example, "English"
+    private int pageSegmentationMode = TessBaseAPI.PageSegMode.PSM_AUTO_OSD;
+    private int ocrEngineMode = TessBaseAPI.OEM_TESSERACT_ONLY;
+    private String characterBlacklist;
+    private String characterWhitelist;
+    private ShutterButton shutterButton;
+    private boolean isTranslationActive; // Whether we want to show translations
+    private boolean isContinuousModeActive; // Whether we are doing OCR in continuous mode
+    private SharedPreferences prefs;
+    private OnSharedPreferenceChangeListener listener;
+    private ProgressDialog dialog; // for initOcr - language download & unzip
+    private ProgressDialog indeterminateDialog; // also for initOcr - init OCR engine
+    private boolean isEngineReady;
+    private boolean isPaused;
+    private static boolean isFirstLaunch; // True if this is the first time the app is being run
 
-  Handler getHandler() {
-    return handler;
-  }
-
-  TessBaseAPI getBaseApi() {
-    return baseApi;
-  }
-
-  CameraManager getCameraManager() {
-    return cameraManager;
-  }
-
-  @Override
-  public void onCreate(Bundle icicle) {
-    super.onCreate(icicle);
-
-    checkFirstLaunch();
-
-    if (isFirstLaunch) {
-      setDefaultPreferences();
+    Handler getHandler() {
+      return handler;
     }
 
-    Window window = getWindow();
-    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-    requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-    // Requests a voice menu on this activity. As for any other
-    // window feature, be sure to request this before
-    // setContentView() is called
-    getWindow().requestFeature(WindowUtils.FEATURE_VOICE_COMMANDS);
-    setContentView(R.layout.capture);
-    viewfinderView = (ViewfinderView) findViewById(R.id.viewfinder_view);
-    cameraButtonView = findViewById(R.id.camera_button_view);
-    resultView = findViewById(R.id.result_view);
-
-    statusViewBottom = (TextView) findViewById(R.id.status_view_bottom);
-    registerForContextMenu(statusViewBottom);
-    statusViewTop = (TextView) findViewById(R.id.status_view_top);
-    registerForContextMenu(statusViewTop);
-
-    handler = null;
-    lastResult = null;
-    hasSurface = false;
-    beepManager = new BeepManager(this);
-
-    // Camera shutter button
-    if (DISPLAY_SHUTTER_BUTTON) {
-      shutterButton = (ShutterButton) findViewById(R.id.shutter_button);
-      shutterButton.setOnShutterButtonListener(this);
+    TessBaseAPI getBaseApi() {
+      return baseApi;
     }
 
-    ocrResultView = (TextView) findViewById(R.id.ocr_result_text_view);
-    registerForContextMenu(ocrResultView);
-    translationView = (TextView) findViewById(R.id.translation_text_view);
-    registerForContextMenu(translationView);
+    CameraManager getCameraManager() {
+      return cameraManager;
+    }
 
-    progressView = (View) findViewById(R.id.indeterminate_progress_indicator_view);
+    @
+    Override
+    public void onCreate(Bundle icicle) {
+      super.onCreate(icicle);
 
-    cameraManager = new CameraManager(getApplication());
-    viewfinderView.setCameraManager(cameraManager);
+      checkFirstLaunch();
 
-    // Set listener to change the size of the viewfinder rectangle.
-    viewfinderView.setOnTouchListener(new View.OnTouchListener() {
-      int lastX = -1;
-      int lastY = -1;
+      if (isFirstLaunch) {
+        setDefaultPreferences();
+      }
 
-      @Override
-      public boolean onTouch(View v, MotionEvent event) {
-        switch (event.getAction()) {
-        case MotionEvent.ACTION_DOWN:
-          lastX = -1;
-          lastY = -1;
-          return true;
-        case MotionEvent.ACTION_MOVE:
-          int currentX = (int) event.getX();
-          int currentY = (int) event.getY();
+      Window window = getWindow();
+      window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+      requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+      // Requests a voice menu on this activity. As for any other
+      // window feature, be sure to request this before
+      // setContentView() is called
+      getWindow().requestFeature(WindowUtils.FEATURE_VOICE_COMMANDS);
+      setContentView(R.layout.capture);
+      viewfinderView = (ViewfinderView) findViewById(R.id.viewfinder_view);
+      cameraButtonView = findViewById(R.id.camera_button_view);
+      resultView = findViewById(R.id.result_view);
 
-          try {
-            Rect rect = cameraManager.getFramingRect();
+      statusViewBottom = (TextView) findViewById(R.id.status_view_bottom);
+      registerForContextMenu(statusViewBottom);
+      statusViewTop = (TextView) findViewById(R.id.status_view_top);
+      registerForContextMenu(statusViewTop);
 
-            final int BUFFER = 50;
-            final int BIG_BUFFER = 60;
-            if (lastX >= 0) {
-              // Adjust the size of the viewfinder rectangle. Check if the touch event occurs in the corner areas first, because the regions overlap.
-              if (((currentX >= rect.left - BIG_BUFFER && currentX <= rect.left + BIG_BUFFER) || (lastX >= rect.left - BIG_BUFFER && lastX <= rect.left + BIG_BUFFER))
-                  && ((currentY <= rect.top + BIG_BUFFER && currentY >= rect.top - BIG_BUFFER) || (lastY <= rect.top + BIG_BUFFER && lastY >= rect.top - BIG_BUFFER))) {
-                // Top left corner: adjust both top and left sides
-                cameraManager.adjustFramingRect( 2 * (lastX - currentX), 2 * (lastY - currentY));
-                viewfinderView.removeResultText();
-              } else if (((currentX >= rect.right - BIG_BUFFER && currentX <= rect.right + BIG_BUFFER) || (lastX >= rect.right - BIG_BUFFER && lastX <= rect.right + BIG_BUFFER))
-                  && ((currentY <= rect.top + BIG_BUFFER && currentY >= rect.top - BIG_BUFFER) || (lastY <= rect.top + BIG_BUFFER && lastY >= rect.top - BIG_BUFFER))) {
-                // Top right corner: adjust both top and right sides
-                cameraManager.adjustFramingRect( 2 * (currentX - lastX), 2 * (lastY - currentY));
-                viewfinderView.removeResultText();
-              } else if (((currentX >= rect.left - BIG_BUFFER && currentX <= rect.left + BIG_BUFFER) || (lastX >= rect.left - BIG_BUFFER && lastX <= rect.left + BIG_BUFFER))
-                  && ((currentY <= rect.bottom + BIG_BUFFER && currentY >= rect.bottom - BIG_BUFFER) || (lastY <= rect.bottom + BIG_BUFFER && lastY >= rect.bottom - BIG_BUFFER))) {
-                // Bottom left corner: adjust both bottom and left sides
-                cameraManager.adjustFramingRect(2 * (lastX - currentX), 2 * (currentY - lastY));
-                viewfinderView.removeResultText();
-              } else if (((currentX >= rect.right - BIG_BUFFER && currentX <= rect.right + BIG_BUFFER) || (lastX >= rect.right - BIG_BUFFER && lastX <= rect.right + BIG_BUFFER))
-                  && ((currentY <= rect.bottom + BIG_BUFFER && currentY >= rect.bottom - BIG_BUFFER) || (lastY <= rect.bottom + BIG_BUFFER && lastY >= rect.bottom - BIG_BUFFER))) {
-                // Bottom right corner: adjust both bottom and right sides
-                cameraManager.adjustFramingRect(2 * (currentX - lastX), 2 * (currentY - lastY));
-                viewfinderView.removeResultText();
-              } else if (((currentX >= rect.left - BUFFER && currentX <= rect.left + BUFFER) || (lastX >= rect.left - BUFFER && lastX <= rect.left + BUFFER))
-                  && ((currentY <= rect.bottom && currentY >= rect.top) || (lastY <= rect.bottom && lastY >= rect.top))) {
-                // Adjusting left side: event falls within BUFFER pixels of left side, and between top and bottom side limits
-                cameraManager.adjustFramingRect(2 * (lastX - currentX), 0);
-                viewfinderView.removeResultText();
-              } else if (((currentX >= rect.right - BUFFER && currentX <= rect.right + BUFFER) || (lastX >= rect.right - BUFFER && lastX <= rect.right + BUFFER))
-                  && ((currentY <= rect.bottom && currentY >= rect.top) || (lastY <= rect.bottom && lastY >= rect.top))) {
-                // Adjusting right side: event falls within BUFFER pixels of right side, and between top and bottom side limits
-                cameraManager.adjustFramingRect(2 * (currentX - lastX), 0);
-                viewfinderView.removeResultText();
-              } else if (((currentY <= rect.top + BUFFER && currentY >= rect.top - BUFFER) || (lastY <= rect.top + BUFFER && lastY >= rect.top - BUFFER))
-                  && ((currentX <= rect.right && currentX >= rect.left) || (lastX <= rect.right && lastX >= rect.left))) {
-                // Adjusting top side: event falls within BUFFER pixels of top side, and between left and right side limits
-                cameraManager.adjustFramingRect(0, 2 * (lastY - currentY));
-                viewfinderView.removeResultText();
-              } else if (((currentY <= rect.bottom + BUFFER && currentY >= rect.bottom - BUFFER) || (lastY <= rect.bottom + BUFFER && lastY >= rect.bottom - BUFFER))
-                  && ((currentX <= rect.right && currentX >= rect.left) || (lastX <= rect.right && lastX >= rect.left))) {
-                // Adjusting bottom side: event falls within BUFFER pixels of bottom side, and between left and right side limits
-                cameraManager.adjustFramingRect(0, 2 * (currentY - lastY));
-                viewfinderView.removeResultText();
+      handler = null;
+      lastResult = null;
+      hasSurface = false;
+      beepManager = new BeepManager(this);
+
+      // Camera shutter button
+      if (DISPLAY_SHUTTER_BUTTON) {
+        shutterButton = (ShutterButton) findViewById(R.id.shutter_button);
+        shutterButton.setOnShutterButtonListener(this);
+      }
+
+      ocrResultView = (TextView) findViewById(R.id.ocr_result_text_view);
+      registerForContextMenu(ocrResultView);
+      translationView = (TextView) findViewById(R.id.translation_text_view);
+      registerForContextMenu(translationView);
+
+      progressView = (View) findViewById(R.id.indeterminate_progress_indicator_view);
+
+      cameraManager = new CameraManager(getApplication());
+      viewfinderView.setCameraManager(cameraManager);
+
+      // Set listener to change the size of the viewfinder rectangle.
+      viewfinderView.setOnTouchListener(new View.OnTouchListener() {
+        int lastX = -1;
+        int lastY = -1;
+
+        @
+        Override
+        public boolean onTouch(View v, MotionEvent event) {
+          switch (event.getAction()) {
+          case MotionEvent.ACTION_DOWN:
+            lastX = -1;
+            lastY = -1;
+            return true;
+          case MotionEvent.ACTION_MOVE:
+            int currentX = (int) event.getX();
+            int currentY = (int) event.getY();
+
+            try {
+              Rect rect = cameraManager.getFramingRect();
+
+              final int BUFFER = 50;
+              final int BIG_BUFFER = 60;
+              if (lastX >= 0) {
+                // Adjust the size of the viewfinder rectangle. Check if the touch event occurs in the corner areas first, because the regions overlap.
+                if (((currentX >= rect.left - BIG_BUFFER && currentX <= rect.left + BIG_BUFFER) || (lastX >= rect.left - BIG_BUFFER && lastX <= rect.left + BIG_BUFFER)) && ((currentY <= rect.top + BIG_BUFFER && currentY >= rect.top - BIG_BUFFER) || (lastY <= rect.top + BIG_BUFFER && lastY >= rect.top - BIG_BUFFER))) {
+                  // Top left corner: adjust both top and left sides
+                  cameraManager.adjustFramingRect(2 * (lastX - currentX), 2 * (lastY - currentY));
+                  viewfinderView.removeResultText();
+                } else if (((currentX >= rect.right - BIG_BUFFER && currentX <= rect.right + BIG_BUFFER) || (lastX >= rect.right - BIG_BUFFER && lastX <= rect.right + BIG_BUFFER)) && ((currentY <= rect.top + BIG_BUFFER && currentY >= rect.top - BIG_BUFFER) || (lastY <= rect.top + BIG_BUFFER && lastY >= rect.top - BIG_BUFFER))) {
+                  // Top right corner: adjust both top and right sides
+                  cameraManager.adjustFramingRect(2 * (currentX - lastX), 2 * (lastY - currentY));
+                  viewfinderView.removeResultText();
+                } else if (((currentX >= rect.left - BIG_BUFFER && currentX <= rect.left + BIG_BUFFER) || (lastX >= rect.left - BIG_BUFFER && lastX <= rect.left + BIG_BUFFER)) && ((currentY <= rect.bottom + BIG_BUFFER && currentY >= rect.bottom - BIG_BUFFER) || (lastY <= rect.bottom + BIG_BUFFER && lastY >= rect.bottom - BIG_BUFFER))) {
+                  // Bottom left corner: adjust both bottom and left sides
+                  cameraManager.adjustFramingRect(2 * (lastX - currentX), 2 * (currentY - lastY));
+                  viewfinderView.removeResultText();
+                } else if (((currentX >= rect.right - BIG_BUFFER && currentX <= rect.right + BIG_BUFFER) || (lastX >= rect.right - BIG_BUFFER && lastX <= rect.right + BIG_BUFFER)) && ((currentY <= rect.bottom + BIG_BUFFER && currentY >= rect.bottom - BIG_BUFFER) || (lastY <= rect.bottom + BIG_BUFFER && lastY >= rect.bottom - BIG_BUFFER))) {
+                  // Bottom right corner: adjust both bottom and right sides
+                  cameraManager.adjustFramingRect(2 * (currentX - lastX), 2 * (currentY - lastY));
+                  viewfinderView.removeResultText();
+                } else if (((currentX >= rect.left - BUFFER && currentX <= rect.left + BUFFER) || (lastX >= rect.left - BUFFER && lastX <= rect.left + BUFFER)) && ((currentY <= rect.bottom && currentY >= rect.top) || (lastY <= rect.bottom && lastY >= rect.top))) {
+                  // Adjusting left side: event falls within BUFFER pixels of left side, and between top and bottom side limits
+                  cameraManager.adjustFramingRect(2 * (lastX - currentX), 0);
+                  viewfinderView.removeResultText();
+                } else if (((currentX >= rect.right - BUFFER && currentX <= rect.right + BUFFER) || (lastX >= rect.right - BUFFER && lastX <= rect.right + BUFFER)) && ((currentY <= rect.bottom && currentY >= rect.top) || (lastY <= rect.bottom && lastY >= rect.top))) {
+                  // Adjusting right side: event falls within BUFFER pixels of right side, and between top and bottom side limits
+                  cameraManager.adjustFramingRect(2 * (currentX - lastX), 0);
+                  viewfinderView.removeResultText();
+                } else if (((currentY <= rect.top + BUFFER && currentY >= rect.top - BUFFER) || (lastY <= rect.top + BUFFER && lastY >= rect.top - BUFFER)) && ((currentX <= rect.right && currentX >= rect.left) || (lastX <= rect.right && lastX >= rect.left))) {
+                  // Adjusting top side: event falls within BUFFER pixels of top side, and between left and right side limits
+                  cameraManager.adjustFramingRect(0, 2 * (lastY - currentY));
+                  viewfinderView.removeResultText();
+                } else if (((currentY <= rect.bottom + BUFFER && currentY >= rect.bottom - BUFFER) || (lastY <= rect.bottom + BUFFER && lastY >= rect.bottom - BUFFER)) && ((currentX <= rect.right && currentX >= rect.left) || (lastX <= rect.right && lastX >= rect.left))) {
+                  // Adjusting bottom side: event falls within BUFFER pixels of bottom side, and between left and right side limits
+                  cameraManager.adjustFramingRect(0, 2 * (currentY - lastY));
+                  viewfinderView.removeResultText();
+                }
               }
+            } catch (NullPointerException e) {
+              Log.e(TAG, "Framing rect not available", e);
             }
-          } catch (NullPointerException e) {
-            Log.e(TAG, "Framing rect not available", e);
+            v.invalidate();
+            lastX = currentX;
+            lastY = currentY;
+            return true;
+          case MotionEvent.ACTION_UP:
+            lastX = -1;
+            lastY = -1;
+            return true;
           }
-          v.invalidate();
-          lastX = currentX;
-          lastY = currentY;
-          return true;
-        case MotionEvent.ACTION_UP:
-          lastX = -1;
-          lastY = -1;
-          return true;
+          return false;
         }
-        return false;
-      }
-    });
+      });
 
-    isEngineReady = false;
-  }
-
-  @Override
-  protected void onResume() {
-    super.onResume();
-    resetStatusView();
-
-    String previousSourceLanguageCodeOcr = sourceLanguageCodeOcr;
-    int previousOcrEngineMode = ocrEngineMode;
-
-    retrievePreferences();
-
-    // Set up the camera preview surface.
-    surfaceView = (SurfaceView) findViewById(R.id.preview_view);
-    surfaceHolder = surfaceView.getHolder();
-    if (!hasSurface) {
-      surfaceHolder.addCallback(this);
-      surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+      isEngineReady = false;
     }
 
-    // Comment out the following block to test non-OCR functions without an SD card
+    @
+    Override
+    protected void onResume() {
+      super.onResume();
+      resetStatusView();
 
-    // Do OCR engine initialization, if necessary
-    boolean doNewInit = (baseApi == null) || !sourceLanguageCodeOcr.equals(previousSourceLanguageCodeOcr) ||
+      String previousSourceLanguageCodeOcr = sourceLanguageCodeOcr;
+      int previousOcrEngineMode = ocrEngineMode;
+
+      retrievePreferences();
+
+      // Set up the camera preview surface.
+      surfaceView = (SurfaceView) findViewById(R.id.preview_view);
+      surfaceHolder = surfaceView.getHolder();
+      if (!hasSurface) {
+        surfaceHolder.addCallback(this);
+        surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+      }
+
+      // Comment out the following block to test non-OCR functions without an SD card
+
+      // Do OCR engine initialization, if necessary
+      boolean doNewInit = (baseApi == null) || !sourceLanguageCodeOcr.equals(previousSourceLanguageCodeOcr) ||
         ocrEngineMode != previousOcrEngineMode;
-    if (doNewInit) {
-      // Initialize the OCR engine
-      File storageDirectory = getStorageDirectory();
-      if (storageDirectory != null) {
-        initOcrEngine(storageDirectory, sourceLanguageCodeOcr, sourceLanguageReadable);
-      }
-    } else {
-      // We already have the engine initialized, so just start the camera.
-      resumeOCR();
-    }
-  }
-
-  /**
-   * Method to start or restart recognition after the OCR engine has been initialized,
-   * or after the app regains focus. Sets state related settings and OCR engine parameters,
-   * and requests camera initialization.
-   */
-  void resumeOCR() {
-    Log.d(TAG, "resumeOCR()");
-
-    // This method is called when Tesseract has already been successfully initialized, so set
-    // isEngineReady = true here.
-    isEngineReady = true;
-
-    isPaused = false;
-
-    if (handler != null) {
-      handler.resetState();
-    }
-    if (baseApi != null) {
-      baseApi.setPageSegMode(pageSegmentationMode);
-      baseApi.setVariable(TessBaseAPI.VAR_CHAR_BLACKLIST, characterBlacklist);
-      baseApi.setVariable(TessBaseAPI.VAR_CHAR_WHITELIST, characterWhitelist);
-    }
-
-    if (hasSurface) {
-      // The activity was paused but not stopped, so the surface still exists. Therefore
-      // surfaceCreated() won't be called, so init the camera here.
-      initCamera(surfaceHolder);
-    }
-  }
-
-  /** Called when the shutter button is pressed in continuous mode. */
-  void onShutterButtonPressContinuous() {
-    isPaused = true;
-    handler.stop();
-    beepManager.playBeepSoundAndVibrate();
-    if (lastResult != null) {
-      handleOcrDecode(lastResult);
-    } else {
-      Toast toast = Toast.makeText(this, "OCR failed. Please try again.", Toast.LENGTH_SHORT);
-      toast.setGravity(Gravity.TOP, 0, 0);
-      toast.show();
-      resumeContinuousDecoding();
-    }
-  }
-
-  /** Called to resume recognition after translation in continuous mode. */
-  @SuppressWarnings("unused")
-  void resumeContinuousDecoding() {
-    isPaused = false;
-    resetStatusView();
-    setStatusViewForContinuous();
-    DecodeHandler.resetDecodeState();
-    handler.resetState();
-    if (shutterButton != null && DISPLAY_SHUTTER_BUTTON) {
-      shutterButton.setVisibility(View.VISIBLE);
-    }
-  }
-
-  @Override
-  public void surfaceCreated(SurfaceHolder holder) {
-    Log.d(TAG, "surfaceCreated()");
-
-    if (holder == null) {
-      Log.e(TAG, "surfaceCreated gave us a null surface");
-    }
-
-    // Only initialize the camera if the OCR engine is ready to go.
-    if (!hasSurface && isEngineReady) {
-      Log.d(TAG, "surfaceCreated(): calling initCamera()...");
-      initCamera(holder);
-    }
-    hasSurface = true;
-  }
-
-  /** Initializes the camera and starts the handler to begin previewing. */
-  private void initCamera(SurfaceHolder surfaceHolder) {
-    Log.d(TAG, "initCamera()");
-    if (surfaceHolder == null) {
-      throw new IllegalStateException("No SurfaceHolder provided");
-    }
-    try {
-
-      // Open and initialize the camera
-      cameraManager.openDriver(surfaceHolder);
-
-      // Creating the handler starts the preview, which can also throw a RuntimeException.
-      handler = new CaptureActivityHandler(this, cameraManager, isContinuousModeActive);
-
-    } catch (IOException ioe) {
-      showErrorMessage("Error", "Could not initialize camera. Please try restarting device.");
-    } catch (RuntimeException e) {
-      // Barcode Scanner has seen crashes in the wild of this variety:
-      // java.?lang.?RuntimeException: Fail to connect to camera service
-      showErrorMessage("Error", "Could not initialize camera. Please try restarting device.");
-    }
-  }
-
-  @Override
-  protected void onPause() {
-    if (handler != null) {
-      handler.quitSynchronously();
-    }
-
-    // Stop using the camera, to avoid conflicting with other camera-based apps
-    cameraManager.closeDriver();
-
-    if (!hasSurface) {
-      SurfaceView surfaceView = (SurfaceView) findViewById(R.id.preview_view);
-      SurfaceHolder surfaceHolder = surfaceView.getHolder();
-      surfaceHolder.removeCallback(this);
-    }
-    super.onPause();
-  }
-
-  void stopHandler() {
-    if (handler != null) {
-      handler.stop();
-    }
-  }
-
-  @Override
-  protected void onDestroy() {
-    if (baseApi != null) {
-      baseApi.end();
-    }
-    super.onDestroy();
-  }
-
-  @Override
-  public boolean onKeyDown(int keyCode, KeyEvent event) {
-    if (keyCode == KeyEvent.KEYCODE_BACK) {
-
-      // First check if we're paused in continuous mode, and if so, just unpause.
-      if (isPaused) {
-        Log.d(TAG, "only resuming continuous recognition, not quitting...");
-        resumeContinuousDecoding();
-        return true;
-      }
-
-      // Exit the app if we're not viewing an OCR result.
-      if (lastResult == null) {
-        setResult(RESULT_CANCELED);
-        finish();
-        return true;
+      if (doNewInit) {
+        // Initialize the OCR engine
+        File storageDirectory = getStorageDirectory();
+        if (storageDirectory != null) {
+          initOcrEngine(storageDirectory, sourceLanguageCodeOcr, sourceLanguageReadable);
+        }
       } else {
-        // Go back to previewing in regular OCR mode.
-        resetStatusView();
-        if (handler != null) {
-          handler.sendEmptyMessage(R.id.restart_preview);
+        // We already have the engine initialized, so just start the camera.
+        resumeOCR();
+      }
+    }
+
+    /**
+     * Method to start or restart recognition after the OCR engine has been initialized,
+     * or after the app regains focus. Sets state related settings and OCR engine parameters,
+     * and requests camera initialization.
+     */
+    void resumeOCR() {
+      Log.d(TAG, "resumeOCR()");
+
+      // This method is called when Tesseract has already been successfully initialized, so set
+      // isEngineReady = true here.
+      isEngineReady = true;
+
+      isPaused = false;
+
+      if (handler != null) {
+        handler.resetState();
+      }
+      if (baseApi != null) {
+        baseApi.setPageSegMode(pageSegmentationMode);
+        baseApi.setVariable(TessBaseAPI.VAR_CHAR_BLACKLIST, characterBlacklist);
+        baseApi.setVariable(TessBaseAPI.VAR_CHAR_WHITELIST, characterWhitelist);
+      }
+
+      if (hasSurface) {
+        // The activity was paused but not stopped, so the surface still exists. Therefore
+        // surfaceCreated() won't be called, so init the camera here.
+        initCamera(surfaceHolder);
+      }
+    }
+
+    /** Called when the shutter button is pressed in continuous mode. */
+    void onShutterButtonPressContinuous() {
+      isPaused = true;
+      handler.stop();
+      beepManager.playBeepSoundAndVibrate();
+      if (lastResult != null) {
+        handleOcrDecode(lastResult);
+      } else {
+        Toast toast = Toast.makeText(this, "OCR failed. Please try again.", Toast.LENGTH_SHORT);
+        toast.setGravity(Gravity.TOP, 0, 0);
+        toast.show();
+        resumeContinuousDecoding();
+      }
+    }
+
+    /** Called to resume recognition after translation in continuous mode. */
+    @
+    SuppressWarnings("unused")
+    void resumeContinuousDecoding() {
+      isPaused = false;
+      resetStatusView();
+      setStatusViewForContinuous();
+      DecodeHandler.resetDecodeState();
+      handler.resetState();
+      if (shutterButton != null && DISPLAY_SHUTTER_BUTTON) {
+        shutterButton.setVisibility(View.VISIBLE);
+      }
+    }
+
+    @
+    Override
+    public void surfaceCreated(SurfaceHolder holder) {
+      Log.d(TAG, "surfaceCreated()");
+
+      if (holder == null) {
+        Log.e(TAG, "surfaceCreated gave us a null surface");
+      }
+
+      // Only initialize the camera if the OCR engine is ready to go.
+      if (!hasSurface && isEngineReady) {
+        Log.d(TAG, "surfaceCreated(): calling initCamera()...");
+        initCamera(holder);
+      }
+      hasSurface = true;
+    }
+
+    /** Initializes the camera and starts the handler to begin previewing. */
+    private void initCamera(SurfaceHolder surfaceHolder) {
+      Log.d(TAG, "initCamera()");
+      if (surfaceHolder == null) {
+        throw new IllegalStateException("No SurfaceHolder provided");
+      }
+      try {
+
+        // Open and initialize the camera
+        cameraManager.openDriver(surfaceHolder);
+
+        // Creating the handler starts the preview, which can also throw a RuntimeException.
+        handler = new CaptureActivityHandler(this, cameraManager, isContinuousModeActive);
+
+      } catch (IOException ioe) {
+        showErrorMessage("Error", "Could not initialize camera. Please try restarting device.");
+      } catch (RuntimeException e) {
+        // Barcode Scanner has seen crashes in the wild of this variety:
+        // java.?lang.?RuntimeException: Fail to connect to camera service
+        showErrorMessage("Error", "Could not initialize camera. Please try restarting device.");
+      }
+    }
+
+    @
+    Override
+    protected void onPause() {
+      if (handler != null) {
+        handler.quitSynchronously();
+      }
+
+      // Stop using the camera, to avoid conflicting with other camera-based apps
+      cameraManager.closeDriver();
+
+      if (!hasSurface) {
+        SurfaceView surfaceView = (SurfaceView) findViewById(R.id.preview_view);
+        SurfaceHolder surfaceHolder = surfaceView.getHolder();
+        surfaceHolder.removeCallback(this);
+      }
+      super.onPause();
+    }
+
+    void stopHandler() {
+      if (handler != null) {
+        handler.stop();
+      }
+    }
+
+    @
+    Override
+    protected void onDestroy() {
+      if (baseApi != null) {
+        baseApi.end();
+      }
+      super.onDestroy();
+    }
+
+    @
+    Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+      if (keyCode == KeyEvent.KEYCODE_BACK) {
+
+        // First check if we're paused in continuous mode, and if so, just unpause.
+        if (isPaused) {
+          Log.d(TAG, "only resuming continuous recognition, not quitting...");
+          resumeContinuousDecoding();
+          return true;
+        }
+
+        // Exit the app if we're not viewing an OCR result.
+        if (lastResult == null) {
+          setResult(RESULT_CANCELED);
+          finish();
+          return true;
+        } else {
+          // Go back to previewing in regular OCR mode.
+          resetStatusView();
+          if (handler != null) {
+            handler.sendEmptyMessage(R.id.restart_preview);
+          }
+          return true;
+        }
+      } else if (keyCode == KeyEvent.KEYCODE_CAMERA) {
+        if (isContinuousModeActive) {
+          onShutterButtonPressContinuous();
+        } else {
+          handler.hardwareShutterButtonClick();
+        }
+        return true;
+      } else if (keyCode == KeyEvent.KEYCODE_FOCUS) {
+        // Only perform autofocus if user is not holding down the button.
+        if (event.getRepeatCount() == 0) {
+          cameraManager.requestAutoFocus(500L);
         }
         return true;
       }
-    } else if (keyCode == KeyEvent.KEYCODE_CAMERA) {
-      if (isContinuousModeActive) {
-        onShutterButtonPressContinuous();
-      } else {
-        handler.hardwareShutterButtonClick();
-      }
+      return super.onKeyDown(keyCode, event);
+    }
+
+    @
+    Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+      //    MenuInflater inflater = getMenuInflater();
+      //    inflater.inflate(R.menu.options_menu, menu);
+      super.onCreateOptionsMenu(menu);
+      menu.add(0, SETTINGS_ID, 0, "Settings").setIcon(android.R.drawable.ic_menu_preferences);
+      menu.add(0, ABOUT_ID, 0, "About").setIcon(android.R.drawable.ic_menu_info_details);
       return true;
-    } else if (keyCode == KeyEvent.KEYCODE_FOCUS) {
-      // Only perform autofocus if user is not holding down the button.
-      if (event.getRepeatCount() == 0) {
-        cameraManager.requestAutoFocus(500L);
+    }
+
+    @
+    Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+      Intent intent;
+      switch (item.getItemId()) {
+      case SETTINGS_ID:
+        {
+          intent = new Intent().setClass(this, PreferencesActivity.class);
+          startActivity(intent);
+          break;
+        }
       }
+      return super.onOptionsItemSelected(item);
+    }
+
+    public void surfaceDestroyed(SurfaceHolder holder) {
+      hasSurface = false;
+    }
+
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
+
+    /** Sets the necessary language code values for the given OCR language. */
+    private boolean setSourceLanguage(String languageCode) {
+      sourceLanguageCodeOcr = languageCode;
+      sourceLanguageCodeTranslation = LanguageCodeHelper.mapLanguageCode(languageCode);
+      sourceLanguageReadable = LanguageCodeHelper.getOcrLanguageName(this, languageCode);
       return true;
     }
-    return super.onKeyDown(keyCode, event);
-  }
 
-  @Override
-  public boolean onCreateOptionsMenu(Menu menu) {
-    //    MenuInflater inflater = getMenuInflater();
-    //    inflater.inflate(R.menu.options_menu, menu);
-    super.onCreateOptionsMenu(menu);
-    menu.add(0, SETTINGS_ID, 0, "Settings").setIcon(android.R.drawable.ic_menu_preferences);
-    menu.add(0, ABOUT_ID, 0, "About").setIcon(android.R.drawable.ic_menu_info_details);
-    return true;
-  }
-
-  @Override
-  public boolean onOptionsItemSelected(MenuItem item) {
-    Intent intent;
-    switch (item.getItemId()) {
-    case SETTINGS_ID: {
-      intent = new Intent().setClass(this, PreferencesActivity.class);
-      startActivity(intent);
-      break;
-    }
-    }
-    return super.onOptionsItemSelected(item);
-  }
-
-  public void surfaceDestroyed(SurfaceHolder holder) {
-    hasSurface = false;
-  }
-
-  public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-  }
-
-  /** Sets the necessary language code values for the given OCR language. */
-  private boolean setSourceLanguage(String languageCode) {
-    sourceLanguageCodeOcr = languageCode;
-    sourceLanguageCodeTranslation = LanguageCodeHelper.mapLanguageCode(languageCode);
-    sourceLanguageReadable = LanguageCodeHelper.getOcrLanguageName(this, languageCode);
-    return true;
-  }
-
-  /** Sets the necessary language code values for the translation target language. */
-  private boolean setTargetLanguage(String languageCode) {
-    targetLanguageCodeTranslation = languageCode;
-    targetLanguageReadable = LanguageCodeHelper.getTranslationLanguageName(this, languageCode);
-    return true;
-  }
-
-  /** Finds the proper location on the SD card where we can save files. */
-  private File getStorageDirectory() {
-    //Log.d(TAG, "getStorageDirectory(): API level is " + Integer.valueOf(android.os.Build.VERSION.SDK_INT));
-
-    String state = null;
-    try {
-      state = Environment.getExternalStorageState();
-    } catch (RuntimeException e) {
-      Log.e(TAG, "Is the SD card visible?", e);
-      showErrorMessage("Error", "Required external storage (such as an SD card) is unavailable.");
+    /** Sets the necessary language code values for the translation target language. */
+    private boolean setTargetLanguage(String languageCode) {
+      targetLanguageCodeTranslation = languageCode;
+      targetLanguageReadable = LanguageCodeHelper.getTranslationLanguageName(this, languageCode);
+      return true;
     }
 
-    if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+    /** Finds the proper location on the SD card where we can save files. */
+    private File getStorageDirectory() {
+      //Log.d(TAG, "getStorageDirectory(): API level is " + Integer.valueOf(android.os.Build.VERSION.SDK_INT));
 
-      // We can read and write the media
-      //    	if (Integer.valueOf(android.os.Build.VERSION.SDK_INT) > 7) {
-      // For Android 2.2 and above
-
+      String state = null;
       try {
-        return getExternalFilesDir(Environment.MEDIA_MOUNTED);
-      } catch (NullPointerException e) {
-        // We get an error here if the SD card is visible, but full
-        Log.e(TAG, "External storage is unavailable");
-        showErrorMessage("Error", "Required external storage (such as an SD card) is full or unavailable.");
+        state = Environment.getExternalStorageState();
+      } catch (RuntimeException e) {
+        Log.e(TAG, "Is the SD card visible?", e);
+        showErrorMessage("Error", "Required external storage (such as an SD card) is unavailable.");
       }
 
-      //        } else {
-      //          // For Android 2.1 and below, explicitly give the path as, for example,
-      //          // "/mnt/sdcard/Android/data/edu.sfsu.cs.orange.ocr/files/"
-      //          return new File(Environment.getExternalStorageDirectory().toString() + File.separator +
-      //                  "Android" + File.separator + "data" + File.separator + getPackageName() +
-      //                  File.separator + "files" + File.separator);
-      //        }
+      if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
 
-    } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-    	// We can only read the media
-    	Log.e(TAG, "External storage is read-only");
-      showErrorMessage("Error", "Required external storage (such as an SD card) is unavailable for data storage.");
-    } else {
-    	// Something else is wrong. It may be one of many other states, but all we need
-      // to know is we can neither read nor write
-    	Log.e(TAG, "External storage is unavailable");
-    	showErrorMessage("Error", "Required external storage (such as an SD card) is unavailable or corrupted.");
+        // We can read and write the media
+        //    	if (Integer.valueOf(android.os.Build.VERSION.SDK_INT) > 7) {
+        // For Android 2.2 and above
+
+        try {
+          return getExternalFilesDir(Environment.MEDIA_MOUNTED);
+        } catch (NullPointerException e) {
+          // We get an error here if the SD card is visible, but full
+          Log.e(TAG, "External storage is unavailable");
+          showErrorMessage("Error", "Required external storage (such as an SD card) is full or unavailable.");
+        }
+
+        //        } else {
+        //          // For Android 2.1 and below, explicitly give the path as, for example,
+        //          // "/mnt/sdcard/Android/data/edu.sfsu.cs.orange.ocr/files/"
+        //          return new File(Environment.getExternalStorageDirectory().toString() + File.separator +
+        //                  "Android" + File.separator + "data" + File.separator + getPackageName() +
+        //                  File.separator + "files" + File.separator);
+        //        }
+
+      } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+        // We can only read the media
+        Log.e(TAG, "External storage is read-only");
+        showErrorMessage("Error", "Required external storage (such as an SD card) is unavailable for data storage.");
+      } else {
+        // Something else is wrong. It may be one of many other states, but all we need
+        // to know is we can neither read nor write
+        Log.e(TAG, "External storage is unavailable");
+        showErrorMessage("Error", "Required external storage (such as an SD card) is unavailable or corrupted.");
+      }
+      return null;
     }
-    return null;
-  }
 
-  /**
-   * Requests initialization of the OCR engine with the given parameters.
-   *
-   * @param storageRoot Path to location of the tessdata directory to use
-   * @param languageCode Three-letter ISO 639-3 language code for OCR
-   * @param languageName Name of the language for OCR, for example, "English"
-   */
-  private void initOcrEngine(File storageRoot, String languageCode, String languageName) {
-    isEngineReady = false;
+    /**
+     * Requests initialization of the OCR engine with the given parameters.
+     *
+     * @param storageRoot Path to location of the tessdata directory to use
+     * @param languageCode Three-letter ISO 639-3 language code for OCR
+     * @param languageName Name of the language for OCR, for example, "English"
+     */
+    private void initOcrEngine(File storageRoot, String languageCode, String languageName) {
+      isEngineReady = false;
 
-    // Set up the dialog box for the thermometer-style download progress indicator
-    if (dialog != null) {
-      dialog.dismiss();
-    }
-    dialog = new ProgressDialog(this);
+      // Set up the dialog box for the thermometer-style download progress indicator
+      if (dialog != null) {
+        dialog.dismiss();
+      }
+      dialog = new ProgressDialog(this);
 
-    // If we have a language that only runs using Cube, then set the ocrEngineMode to Cube
-    if (ocrEngineMode != TessBaseAPI.OEM_CUBE_ONLY) {
-      for (String s : CUBE_REQUIRED_LANGUAGES) {
-        if (s.equals(languageCode)) {
-          ocrEngineMode = TessBaseAPI.OEM_CUBE_ONLY;
+      // If we have a language that only runs using Cube, then set the ocrEngineMode to Cube
+      if (ocrEngineMode != TessBaseAPI.OEM_CUBE_ONLY) {
+        for (String s: CUBE_REQUIRED_LANGUAGES) {
+          if (s.equals(languageCode)) {
+            ocrEngineMode = TessBaseAPI.OEM_CUBE_ONLY;
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            prefs.edit().putString(PreferencesActivity.KEY_OCR_ENGINE_MODE, getOcrEngineModeName()).commit();
+          }
+        }
+      }
+
+      // If our language doesn't support Cube, then set the ocrEngineMode to Tesseract
+      if (ocrEngineMode != TessBaseAPI.OEM_TESSERACT_ONLY) {
+        boolean cubeOk = false;
+        for (String s: CUBE_SUPPORTED_LANGUAGES) {
+          if (s.equals(languageCode)) {
+            cubeOk = true;
+          }
+        }
+        if (!cubeOk) {
+          ocrEngineMode = TessBaseAPI.OEM_TESSERACT_ONLY;
           SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
           prefs.edit().putString(PreferencesActivity.KEY_OCR_ENGINE_MODE, getOcrEngineModeName()).commit();
         }
       }
-    }
 
-    // If our language doesn't support Cube, then set the ocrEngineMode to Tesseract
-    if (ocrEngineMode != TessBaseAPI.OEM_TESSERACT_ONLY) {
-      boolean cubeOk = false;
-      for (String s : CUBE_SUPPORTED_LANGUAGES) {
-        if (s.equals(languageCode)) {
-          cubeOk = true;
-        }
+      // Display the name of the OCR engine we're initializing in the indeterminate progress dialog box
+      indeterminateDialog = new ProgressDialog(this);
+      indeterminateDialog.setTitle("Please wait");
+      String ocrEngineModeName = getOcrEngineModeName();
+      if (ocrEngineModeName.equals("Both")) {
+        indeterminateDialog.setMessage("Initializing Cube and Tesseract OCR engines for " + languageName + "...");
+      } else {
+        indeterminateDialog.setMessage("Initializing " + ocrEngineModeName + " OCR engine for " + languageName + "...");
       }
-      if (!cubeOk) {
-        ocrEngineMode = TessBaseAPI.OEM_TESSERACT_ONLY;
+      indeterminateDialog.setCancelable(false);
+      indeterminateDialog.show();
+
+      if (handler != null) {
+        handler.quitSynchronously();
+      }
+
+      // Disable continuous mode if we're using Cube. This will prevent bad states for devices
+      // with low memory that crash when running OCR with Cube, and prevent unwanted delays.
+      if (ocrEngineMode == TessBaseAPI.OEM_CUBE_ONLY || ocrEngineMode == TessBaseAPI.OEM_TESSERACT_CUBE_COMBINED) {
+        Log.d(TAG, "Disabling continuous preview");
+        isContinuousModeActive = false;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        prefs.edit().putString(PreferencesActivity.KEY_OCR_ENGINE_MODE, getOcrEngineModeName()).commit();
+        prefs.edit().putBoolean(PreferencesActivity.KEY_CONTINUOUS_PREVIEW, false);
+      }
+
+      // Start AsyncTask to install language data and init OCR
+      baseApi = new TessBaseAPI();
+      new OcrInitAsyncTask(this, baseApi, dialog, indeterminateDialog, languageCode, languageName, ocrEngineMode)
+        .execute(storageRoot.toString());
+    }
+
+    /**
+     * Displays information relating to the result of OCR, and requests a translation if necessary.
+     *
+     * @param ocrResult Object representing successful OCR results
+     * @return True if a non-null result was received for OCR
+     */
+    boolean handleOcrDecode(OcrResult ocrResult) {
+      lastResult = ocrResult;
+
+      // Test whether the result is null
+      if (ocrResult.getText() == null || ocrResult.getText().equals("")) {
+        Toast toast = Toast.makeText(this, "OCR failed. Please try again.", Toast.LENGTH_SHORT);
+        toast.setGravity(Gravity.TOP, 0, 0);
+        toast.show();
+        return false;
+      }
+
+      // Turn off capture-related UI elements
+      shutterButton.setVisibility(View.GONE);
+      statusViewBottom.setVisibility(View.GONE);
+      statusViewTop.setVisibility(View.GONE);
+      cameraButtonView.setVisibility(View.GONE);
+      viewfinderView.setVisibility(View.GONE);
+      resultView.setVisibility(View.VISIBLE);
+
+      ImageView bitmapImageView = (ImageView) findViewById(R.id.image_view);
+      lastBitmap = ocrResult.getBitmap();
+      if (lastBitmap == null) {
+        bitmapImageView.setImageBitmap(BitmapFactory.decodeResource(getResources(),
+          R.drawable.ic_launcher));
+      } else {
+        bitmapImageView.setImageBitmap(lastBitmap);
+      }
+
+      // Display the recognized text
+      TextView sourceLanguageTextView = (TextView) findViewById(R.id.source_language_text_view);
+      sourceLanguageTextView.setText(sourceLanguageReadable);
+      TextView ocrResultTextView = (TextView) findViewById(R.id.ocr_result_text_view);
+      ocrResultTextView.setText(ocrResult.getText());
+      // Crudely scale betweeen 22 and 32 -- bigger font for shorter text
+      int scaledSize = Math.max(22, 32 - ocrResult.getText().length() / 4);
+      ocrResultTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, scaledSize);
+
+      TextView translationLanguageLabelTextView = (TextView) findViewById(R.id.translation_language_label_text_view);
+      TextView translationLanguageTextView = (TextView) findViewById(R.id.translation_language_text_view);
+      TextView translationTextView = (TextView) findViewById(R.id.translation_text_view);
+      if (isTranslationActive) {
+        // Handle translation text fields
+        translationLanguageLabelTextView.setVisibility(View.VISIBLE);
+        translationLanguageTextView.setText(targetLanguageReadable);
+        translationLanguageTextView.setTypeface(Typeface.defaultFromStyle(Typeface.NORMAL), Typeface.NORMAL);
+        translationLanguageTextView.setVisibility(View.VISIBLE);
+
+        // Activate/re-activate the indeterminate progress indicator
+        translationTextView.setVisibility(View.GONE);
+        progressView.setVisibility(View.VISIBLE);
+        setProgressBarVisibility(true);
+
+        // Get the translation asynchronously
+        new TranslateAsyncTask(this, sourceLanguageCodeTranslation, targetLanguageCodeTranslation,
+          ocrResult.getText()).execute();
+      } else {
+        translationLanguageLabelTextView.setVisibility(View.GONE);
+        translationLanguageTextView.setVisibility(View.GONE);
+        translationTextView.setVisibility(View.GONE);
+        progressView.setVisibility(View.GONE);
+        setProgressBarVisibility(false);
+      }
+      return true;
+    }
+
+    /**
+     * Displays information relating to the results of a successful real-time OCR request.
+     *
+     * @param ocrResult Object representing successful OCR results
+     */
+    void handleOcrContinuousDecode(OcrResult ocrResult) {
+
+      lastResult = ocrResult;
+
+      // Send an OcrResultText object to the ViewfinderView for text rendering
+      viewfinderView.addResultText(new OcrResultText(ocrResult.getText(),
+        ocrResult.getWordConfidences(),
+        ocrResult.getMeanConfidence(),
+        ocrResult.getBitmapDimensions(),
+        ocrResult.getRegionBoundingBoxes(),
+        ocrResult.getTextlineBoundingBoxes(),
+        ocrResult.getStripBoundingBoxes(),
+        ocrResult.getWordBoundingBoxes(),
+        ocrResult.getCharacterBoundingBoxes()));
+
+      Integer meanConfidence = ocrResult.getMeanConfidence();
+
+      if (CONTINUOUS_DISPLAY_RECOGNIZED_TEXT) {
+        // Display the recognized text on the screen
+        statusViewTop.setText(ocrResult.getText());
+        int scaledSize = Math.max(22, 32 - ocrResult.getText().length() / 4);
+        statusViewTop.setTextSize(TypedValue.COMPLEX_UNIT_SP, scaledSize);
+        statusViewTop.setTextColor(Color.BLACK);
+        statusViewTop.setBackgroundResource(R.color.status_top_text_background);
+
+        statusViewTop.getBackground().setAlpha(meanConfidence * (255 / 100));
+      }
+
+      if (CONTINUOUS_DISPLAY_METADATA) {
+        // Display recognition-related metadata at the bottom of the screen
+        long recognitionTimeRequired = ocrResult.getRecognitionTimeRequired();
+        statusViewBottom.setTextSize(14);
+        statusViewBottom.setText("OCR: " + sourceLanguageReadable + " - Mean confidence: " +
+          meanConfidence.toString() + " - Time required: " + recognitionTimeRequired + " ms");
       }
     }
 
-    // Display the name of the OCR engine we're initializing in the indeterminate progress dialog box
-    indeterminateDialog = new ProgressDialog(this);
-    indeterminateDialog.setTitle("Please wait");
-    String ocrEngineModeName = getOcrEngineModeName();
-    if (ocrEngineModeName.equals("Both")) {
-      indeterminateDialog.setMessage("Initializing Cube and Tesseract OCR engines for " + languageName + "...");
-    } else {
-      indeterminateDialog.setMessage("Initializing " + ocrEngineModeName + " OCR engine for " + languageName + "...");
-    }
-    indeterminateDialog.setCancelable(false);
-    indeterminateDialog.show();
+    /**
+     * Version of handleOcrContinuousDecode for failed OCR requests. Displays a failure message.
+     *
+     * @param obj Metadata for the failed OCR request.
+     */
+    void handleOcrContinuousDecode(OcrResultFailure obj) {
+      lastResult = null;
+      viewfinderView.removeResultText();
 
-    if (handler != null) {
-      handler.quitSynchronously();
-    }
+      // Reset the text in the recognized text box.
+      statusViewTop.setText("");
 
-    // Disable continuous mode if we're using Cube. This will prevent bad states for devices
-    // with low memory that crash when running OCR with Cube, and prevent unwanted delays.
-    if (ocrEngineMode == TessBaseAPI.OEM_CUBE_ONLY || ocrEngineMode == TessBaseAPI.OEM_TESSERACT_CUBE_COMBINED) {
-      Log.d(TAG, "Disabling continuous preview");
-      isContinuousModeActive = false;
-      SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-      prefs.edit().putBoolean(PreferencesActivity.KEY_CONTINUOUS_PREVIEW, false);
+      if (CONTINUOUS_DISPLAY_METADATA) {
+        // Color text delimited by '-' as red.
+        statusViewBottom.setTextSize(14);
+        CharSequence cs = setSpanBetweenTokens("OCR: " + sourceLanguageReadable + " - OCR failed - Time required: " + obj.getTimeRequired() + " ms", "-", new ForegroundColorSpan(0xFFFF0000));
+        statusViewBottom.setText(cs);
+      }
     }
 
-    // Start AsyncTask to install language data and init OCR
-    baseApi = new TessBaseAPI();
-    new OcrInitAsyncTask(this, baseApi, dialog, indeterminateDialog, languageCode, languageName, ocrEngineMode)
-      .execute(storageRoot.toString());
-  }
+    /**
+     * Given either a Spannable String or a regular String and a token, apply
+     * the given CharacterStyle to the span between the tokens.
+     *
+     * NOTE: This method was adapted from:
+     *  http://www.androidengineer.com/2010/08/easy-method-for-formatting-android.html
+     *
+     * <p>
+     * For example, {@code setSpanBetweenTokens("Hello ##world##!", "##", new
+     * ForegroundColorSpan(0xFFFF0000));} will return a CharSequence {@code
+     * "Hello world!"} with {@code world} in red.
+     *
+     */
+    private CharSequence setSpanBetweenTokens(CharSequence text, String token,
+      CharacterStyle...cs) {
+      // Start and end refer to the points where the span will apply
+      int tokenLen = token.length();
+      int start = text.toString().indexOf(token) + tokenLen;
+      int end = text.toString().indexOf(token, start);
 
-  /**
-   * Displays information relating to the result of OCR, and requests a translation if necessary.
-   *
-   * @param ocrResult Object representing successful OCR results
-   * @return True if a non-null result was received for OCR
-   */
-  boolean handleOcrDecode(OcrResult ocrResult) {
-    lastResult = ocrResult;
+      if (start > -1 && end > -1) {
+        // Copy the spannable string to a mutable spannable string
+        SpannableStringBuilder ssb = new SpannableStringBuilder(text);
+        for (CharacterStyle c: cs)
+          ssb.setSpan(c, start, end, 0);
+        text = ssb;
+      }
+      return text;
+    }
 
-    // Test whether the result is null
-    if (ocrResult.getText() == null || ocrResult.getText().equals("")) {
-      Toast toast = Toast.makeText(this, "OCR failed. Please try again.", Toast.LENGTH_SHORT);
+    @
+    Override
+    public void onCreateContextMenu(ContextMenu menu, View v,
+      ContextMenuInfo menuInfo) {
+      super.onCreateContextMenu(menu, v, menuInfo);
+      if (v.equals(ocrResultView)) {
+        menu.add(Menu.NONE, OPTIONS_COPY_RECOGNIZED_TEXT_ID, Menu.NONE, "Copy recognized text");
+        menu.add(Menu.NONE, OPTIONS_SHARE_RECOGNIZED_TEXT_ID, Menu.NONE, "Share recognized text");
+      } else if (v.equals(translationView)) {
+        menu.add(Menu.NONE, OPTIONS_COPY_TRANSLATED_TEXT_ID, Menu.NONE, "Copy translated text");
+        menu.add(Menu.NONE, OPTIONS_SHARE_TRANSLATED_TEXT_ID, Menu.NONE, "Share translated text");
+      }
+    }
+
+    @
+    Override
+    public boolean onContextItemSelected(MenuItem item) {
+      ClipboardManager clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+      switch (item.getItemId()) {
+
+      case OPTIONS_COPY_RECOGNIZED_TEXT_ID:
+        clipboardManager.setText(ocrResultView.getText());
+        if (clipboardManager.hasText()) {
+          Toast toast = Toast.makeText(this, "Text copied.", Toast.LENGTH_LONG);
+          toast.setGravity(Gravity.BOTTOM, 0, 0);
+          toast.show();
+        }
+        return true;
+      case OPTIONS_SHARE_RECOGNIZED_TEXT_ID:
+        Intent shareRecognizedTextIntent = new Intent(android.content.Intent.ACTION_SEND);
+        shareRecognizedTextIntent.setType("text/plain");
+        shareRecognizedTextIntent.putExtra(android.content.Intent.EXTRA_TEXT, ocrResultView.getText());
+        startActivity(Intent.createChooser(shareRecognizedTextIntent, "Share via"));
+        return true;
+      case OPTIONS_COPY_TRANSLATED_TEXT_ID:
+        clipboardManager.setText(translationView.getText());
+        if (clipboardManager.hasText()) {
+          Toast toast = Toast.makeText(this, "Text copied.", Toast.LENGTH_LONG);
+          toast.setGravity(Gravity.BOTTOM, 0, 0);
+          toast.show();
+        }
+        return true;
+      case OPTIONS_SHARE_TRANSLATED_TEXT_ID:
+        Intent shareTranslatedTextIntent = new Intent(android.content.Intent.ACTION_SEND);
+        shareTranslatedTextIntent.setType("text/plain");
+        shareTranslatedTextIntent.putExtra(android.content.Intent.EXTRA_TEXT, translationView.getText());
+        startActivity(Intent.createChooser(shareTranslatedTextIntent, "Share via"));
+        return true;
+      default:
+        return super.onContextItemSelected(item);
+      }
+    }
+
+    /**
+     * Resets view elements.
+     */
+    private void resetStatusView() {
+      resultView.setVisibility(View.GONE);
+      if (CONTINUOUS_DISPLAY_METADATA) {
+        statusViewBottom.setText("");
+        statusViewBottom.setTextSize(14);
+        statusViewBottom.setTextColor(getResources().getColor(R.color.status_text));
+        statusViewBottom.setVisibility(View.VISIBLE);
+      }
+      if (CONTINUOUS_DISPLAY_RECOGNIZED_TEXT) {
+        statusViewTop.setText("");
+        statusViewTop.setTextSize(14);
+        statusViewTop.setVisibility(View.VISIBLE);
+      }
+      viewfinderView.setVisibility(View.VISIBLE);
+      cameraButtonView.setVisibility(View.VISIBLE);
+      if (DISPLAY_SHUTTER_BUTTON) {
+        shutterButton.setVisibility(View.VISIBLE);
+      }
+      lastResult = null;
+      viewfinderView.removeResultText();
+    }
+
+    /** Displays a pop-up message showing the name of the current OCR source language. */
+    void showLanguageName() {
+      Toast toast = Toast.makeText(this, "OCR: " + sourceLanguageReadable, Toast.LENGTH_LONG);
       toast.setGravity(Gravity.TOP, 0, 0);
       toast.show();
+    }
+
+    /**
+     * Displays an initial message to the user while waiting for the first OCR request to be
+     * completed after starting realtime OCR.
+     */
+    void setStatusViewForContinuous() {
+      viewfinderView.removeResultText();
+      if (CONTINUOUS_DISPLAY_METADATA) {
+        statusViewBottom.setText("OCR: " + sourceLanguageReadable + " - waiting for OCR...");
+      }
+    }
+
+    @
+    SuppressWarnings("unused")
+    void setButtonVisibility(boolean visible) {
+      if (shutterButton != null && visible == true && DISPLAY_SHUTTER_BUTTON) {
+        shutterButton.setVisibility(View.VISIBLE);
+      } else if (shutterButton != null) {
+        shutterButton.setVisibility(View.GONE);
+      }
+    }
+
+    /**
+     * Enables/disables the shutter button to prevent double-clicks on the button.
+     *
+     * @param clickable True if the button should accept a click
+     */
+    void setShutterButtonClickable(boolean clickable) {
+      shutterButton.setClickable(clickable);
+    }
+
+    /** Request the viewfinder to be invalidated. */
+    void drawViewfinder() {
+      viewfinderView.drawViewfinder();
+    }
+
+    @
+    Override
+    public void onShutterButtonClick(ShutterButton b) {
+      if (isContinuousModeActive) {
+        onShutterButtonPressContinuous();
+      } else {
+        if (handler != null) {
+          handler.shutterButtonClick();
+        }
+      }
+    }
+
+    @
+    Override
+    public void onShutterButtonFocus(ShutterButton b, boolean pressed) {
+      requestDelayedAutoFocus();
+    }
+
+    /**
+     * Requests autofocus after a 350 ms delay. This delay prevents requesting focus when the user
+     * just wants to click the shutter button without focusing. Quick button press/release will
+     * trigger onShutterButtonClick() before the focus kicks in.
+     */
+    private void requestDelayedAutoFocus() {
+      // Wait 350 ms before focusing to avoid interfering with quick button presses when
+      // the user just wants to take a picture without focusing.
+      cameraManager.requestAutoFocus(350L);
+    }
+
+    static boolean getFirstLaunch() {
+      return isFirstLaunch;
+    }
+
+    /**
+     * We want the help screen to be shown automatically the first time a new version of the app is
+     * run. The easiest way to do this is to check android:versionCode from the manifest, and compare
+     * it to a value stored as a preference.
+     */
+    private boolean checkFirstLaunch() {
+      try {
+        PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
+        int currentVersion = info.versionCode;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        int lastVersion = prefs.getInt(PreferencesActivity.KEY_HELP_VERSION_SHOWN, 0);
+        if (lastVersion == 0) {
+          isFirstLaunch = true;
+        } else {
+          isFirstLaunch = false;
+        }
+      } catch (PackageManager.NameNotFoundException e) {
+        Log.w(TAG, e);
+      }
       return false;
     }
 
-    // Turn off capture-related UI elements
-    shutterButton.setVisibility(View.GONE);
-    statusViewBottom.setVisibility(View.GONE);
-    statusViewTop.setVisibility(View.GONE);
-    cameraButtonView.setVisibility(View.GONE);
-    viewfinderView.setVisibility(View.GONE);
-    resultView.setVisibility(View.VISIBLE);
-
-    ImageView bitmapImageView = (ImageView) findViewById(R.id.image_view);
-    lastBitmap = ocrResult.getBitmap();
-    if (lastBitmap == null) {
-      bitmapImageView.setImageBitmap(BitmapFactory.decodeResource(getResources(),
-          R.drawable.ic_launcher));
-    } else {
-      bitmapImageView.setImageBitmap(lastBitmap);
-    }
-
-    // Display the recognized text
-    TextView sourceLanguageTextView = (TextView) findViewById(R.id.source_language_text_view);
-    sourceLanguageTextView.setText(sourceLanguageReadable);
-    TextView ocrResultTextView = (TextView) findViewById(R.id.ocr_result_text_view);
-    ocrResultTextView.setText(ocrResult.getText());
-    // Crudely scale betweeen 22 and 32 -- bigger font for shorter text
-    int scaledSize = Math.max(22, 32 - ocrResult.getText().length() / 4);
-    ocrResultTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, scaledSize);
-
-    TextView translationLanguageLabelTextView = (TextView) findViewById(R.id.translation_language_label_text_view);
-    TextView translationLanguageTextView = (TextView) findViewById(R.id.translation_language_text_view);
-    TextView translationTextView = (TextView) findViewById(R.id.translation_text_view);
-    if (isTranslationActive) {
-      // Handle translation text fields
-      translationLanguageLabelTextView.setVisibility(View.VISIBLE);
-      translationLanguageTextView.setText(targetLanguageReadable);
-      translationLanguageTextView.setTypeface(Typeface.defaultFromStyle(Typeface.NORMAL), Typeface.NORMAL);
-      translationLanguageTextView.setVisibility(View.VISIBLE);
-
-      // Activate/re-activate the indeterminate progress indicator
-      translationTextView.setVisibility(View.GONE);
-      progressView.setVisibility(View.VISIBLE);
-      setProgressBarVisibility(true);
-
-      // Get the translation asynchronously
-      new TranslateAsyncTask(this, sourceLanguageCodeTranslation, targetLanguageCodeTranslation,
-          ocrResult.getText()).execute();
-    } else {
-      translationLanguageLabelTextView.setVisibility(View.GONE);
-      translationLanguageTextView.setVisibility(View.GONE);
-      translationTextView.setVisibility(View.GONE);
-      progressView.setVisibility(View.GONE);
-      setProgressBarVisibility(false);
-    }
-    return true;
-  }
-
-  /**
-   * Displays information relating to the results of a successful real-time OCR request.
-   *
-   * @param ocrResult Object representing successful OCR results
-   */
-  void handleOcrContinuousDecode(OcrResult ocrResult) {
-
-    lastResult = ocrResult;
-
-    // Send an OcrResultText object to the ViewfinderView for text rendering
-    viewfinderView.addResultText(new OcrResultText(ocrResult.getText(),
-                                                   ocrResult.getWordConfidences(),
-                                                   ocrResult.getMeanConfidence(),
-                                                   ocrResult.getBitmapDimensions(),
-                                                   ocrResult.getRegionBoundingBoxes(),
-                                                   ocrResult.getTextlineBoundingBoxes(),
-                                                   ocrResult.getStripBoundingBoxes(),
-                                                   ocrResult.getWordBoundingBoxes(),
-                                                   ocrResult.getCharacterBoundingBoxes()));
-
-    Integer meanConfidence = ocrResult.getMeanConfidence();
-
-    if (CONTINUOUS_DISPLAY_RECOGNIZED_TEXT) {
-      // Display the recognized text on the screen
-      statusViewTop.setText(ocrResult.getText());
-      int scaledSize = Math.max(22, 32 - ocrResult.getText().length() / 4);
-      statusViewTop.setTextSize(TypedValue.COMPLEX_UNIT_SP, scaledSize);
-      statusViewTop.setTextColor(Color.BLACK);
-      statusViewTop.setBackgroundResource(R.color.status_top_text_background);
-
-      statusViewTop.getBackground().setAlpha(meanConfidence * (255 / 100));
-    }
-
-    if (CONTINUOUS_DISPLAY_METADATA) {
-      // Display recognition-related metadata at the bottom of the screen
-      long recognitionTimeRequired = ocrResult.getRecognitionTimeRequired();
-      statusViewBottom.setTextSize(14);
-      statusViewBottom.setText("OCR: " + sourceLanguageReadable + " - Mean confidence: " +
-          meanConfidence.toString() + " - Time required: " + recognitionTimeRequired + " ms");
-    }
-  }
-
-  /**
-   * Version of handleOcrContinuousDecode for failed OCR requests. Displays a failure message.
-   *
-   * @param obj Metadata for the failed OCR request.
-   */
-  void handleOcrContinuousDecode(OcrResultFailure obj) {
-    lastResult = null;
-    viewfinderView.removeResultText();
-
-    // Reset the text in the recognized text box.
-    statusViewTop.setText("");
-
-    if (CONTINUOUS_DISPLAY_METADATA) {
-      // Color text delimited by '-' as red.
-      statusViewBottom.setTextSize(14);
-      CharSequence cs = setSpanBetweenTokens("OCR: " + sourceLanguageReadable + " - OCR failed - Time required: "
-          + obj.getTimeRequired() + " ms", "-", new ForegroundColorSpan(0xFFFF0000));
-      statusViewBottom.setText(cs);
-    }
-  }
-
-  /**
-   * Given either a Spannable String or a regular String and a token, apply
-   * the given CharacterStyle to the span between the tokens.
-   *
-   * NOTE: This method was adapted from:
-   *  http://www.androidengineer.com/2010/08/easy-method-for-formatting-android.html
-   *
-   * <p>
-   * For example, {@code setSpanBetweenTokens("Hello ##world##!", "##", new
-   * ForegroundColorSpan(0xFFFF0000));} will return a CharSequence {@code
-   * "Hello world!"} with {@code world} in red.
-   *
-   */
-  private CharSequence setSpanBetweenTokens(CharSequence text, String token,
-      CharacterStyle... cs) {
-    // Start and end refer to the points where the span will apply
-    int tokenLen = token.length();
-    int start = text.toString().indexOf(token) + tokenLen;
-    int end = text.toString().indexOf(token, start);
-
-    if (start > -1 && end > -1) {
-      // Copy the spannable string to a mutable spannable string
-      SpannableStringBuilder ssb = new SpannableStringBuilder(text);
-      for (CharacterStyle c : cs)
-        ssb.setSpan(c, start, end, 0);
-      text = ssb;
-    }
-    return text;
-  }
-
-  @Override
-  public void onCreateContextMenu(ContextMenu menu, View v,
-      ContextMenuInfo menuInfo) {
-    super.onCreateContextMenu(menu, v, menuInfo);
-    if (v.equals(ocrResultView)) {
-      menu.add(Menu.NONE, OPTIONS_COPY_RECOGNIZED_TEXT_ID, Menu.NONE, "Copy recognized text");
-      menu.add(Menu.NONE, OPTIONS_SHARE_RECOGNIZED_TEXT_ID, Menu.NONE, "Share recognized text");
-    } else if (v.equals(translationView)){
-      menu.add(Menu.NONE, OPTIONS_COPY_TRANSLATED_TEXT_ID, Menu.NONE, "Copy translated text");
-      menu.add(Menu.NONE, OPTIONS_SHARE_TRANSLATED_TEXT_ID, Menu.NONE, "Share translated text");
-    }
-  }
-
-  @Override
-  public boolean onContextItemSelected(MenuItem item) {
-    ClipboardManager clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-    switch (item.getItemId()) {
-
-    case OPTIONS_COPY_RECOGNIZED_TEXT_ID:
-        clipboardManager.setText(ocrResultView.getText());
-      if (clipboardManager.hasText()) {
-        Toast toast = Toast.makeText(this, "Text copied.", Toast.LENGTH_LONG);
-        toast.setGravity(Gravity.BOTTOM, 0, 0);
-        toast.show();
+    /**
+     * Returns a string that represents which OCR engine(s) are currently set to be run.
+     *
+     * @return OCR engine mode
+     */
+    String getOcrEngineModeName() {
+      String ocrEngineModeName = "";
+      String[] ocrEngineModes = getResources().getStringArray(R.array.ocrenginemodes);
+      if (ocrEngineMode == TessBaseAPI.OEM_TESSERACT_ONLY) {
+        ocrEngineModeName = ocrEngineModes[0];
+      } else if (ocrEngineMode == TessBaseAPI.OEM_CUBE_ONLY) {
+        ocrEngineModeName = ocrEngineModes[1];
+      } else if (ocrEngineMode == TessBaseAPI.OEM_TESSERACT_CUBE_COMBINED) {
+        ocrEngineModeName = ocrEngineModes[2];
       }
-      return true;
-    case OPTIONS_SHARE_RECOGNIZED_TEXT_ID:
-    	Intent shareRecognizedTextIntent = new Intent(android.content.Intent.ACTION_SEND);
-    	shareRecognizedTextIntent.setType("text/plain");
-    	shareRecognizedTextIntent.putExtra(android.content.Intent.EXTRA_TEXT, ocrResultView.getText());
-    	startActivity(Intent.createChooser(shareRecognizedTextIntent, "Share via"));
-    	return true;
-    case OPTIONS_COPY_TRANSLATED_TEXT_ID:
-        clipboardManager.setText(translationView.getText());
-      if (clipboardManager.hasText()) {
-        Toast toast = Toast.makeText(this, "Text copied.", Toast.LENGTH_LONG);
-        toast.setGravity(Gravity.BOTTOM, 0, 0);
-        toast.show();
-      }
-      return true;
-    case OPTIONS_SHARE_TRANSLATED_TEXT_ID:
-    	Intent shareTranslatedTextIntent = new Intent(android.content.Intent.ACTION_SEND);
-    	shareTranslatedTextIntent.setType("text/plain");
-    	shareTranslatedTextIntent.putExtra(android.content.Intent.EXTRA_TEXT, translationView.getText());
-    	startActivity(Intent.createChooser(shareTranslatedTextIntent, "Share via"));
-    	return true;
-    default:
-      return super.onContextItemSelected(item);
+      return ocrEngineModeName;
     }
-  }
 
-  /**
-   * Resets view elements.
-   */
-  private void resetStatusView() {
-    resultView.setVisibility(View.GONE);
-    if (CONTINUOUS_DISPLAY_METADATA) {
-      statusViewBottom.setText("");
-      statusViewBottom.setTextSize(14);
-      statusViewBottom.setTextColor(getResources().getColor(R.color.status_text));
-      statusViewBottom.setVisibility(View.VISIBLE);
-    }
-    if (CONTINUOUS_DISPLAY_RECOGNIZED_TEXT) {
-      statusViewTop.setText("");
-      statusViewTop.setTextSize(14);
-      statusViewTop.setVisibility(View.VISIBLE);
-    }
-    viewfinderView.setVisibility(View.VISIBLE);
-    cameraButtonView.setVisibility(View.VISIBLE);
-    if (DISPLAY_SHUTTER_BUTTON) {
-      shutterButton.setVisibility(View.VISIBLE);
-    }
-    lastResult = null;
-    viewfinderView.removeResultText();
-  }
-
-  /** Displays a pop-up message showing the name of the current OCR source language. */
-  void showLanguageName() {
-    Toast toast = Toast.makeText(this, "OCR: " + sourceLanguageReadable, Toast.LENGTH_LONG);
-    toast.setGravity(Gravity.TOP, 0, 0);
-    toast.show();
-  }
-
-  /**
-   * Displays an initial message to the user while waiting for the first OCR request to be
-   * completed after starting realtime OCR.
-   */
-  void setStatusViewForContinuous() {
-    viewfinderView.removeResultText();
-    if (CONTINUOUS_DISPLAY_METADATA) {
-      statusViewBottom.setText("OCR: " + sourceLanguageReadable + " - waiting for OCR...");
-    }
-  }
-
-  @SuppressWarnings("unused")
-  void setButtonVisibility(boolean visible) {
-    if (shutterButton != null && visible == true && DISPLAY_SHUTTER_BUTTON) {
-      shutterButton.setVisibility(View.VISIBLE);
-    } else if (shutterButton != null) {
-      shutterButton.setVisibility(View.GONE);
-    }
-  }
-
-  /**
-   * Enables/disables the shutter button to prevent double-clicks on the button.
-   *
-   * @param clickable True if the button should accept a click
-   */
-  void setShutterButtonClickable(boolean clickable) {
-    shutterButton.setClickable(clickable);
-  }
-
-  /** Request the viewfinder to be invalidated. */
-  void drawViewfinder() {
-    viewfinderView.drawViewfinder();
-  }
-
-  @Override
-  public void onShutterButtonClick(ShutterButton b) {
-    if (isContinuousModeActive) {
-      onShutterButtonPressContinuous();
-    } else {
-      if (handler != null) {
-        handler.shutterButtonClick();
-      }
-    }
-  }
-
-  @Override
-  public void onShutterButtonFocus(ShutterButton b, boolean pressed) {
-    requestDelayedAutoFocus();
-  }
-
-  /**
-   * Requests autofocus after a 350 ms delay. This delay prevents requesting focus when the user
-   * just wants to click the shutter button without focusing. Quick button press/release will
-   * trigger onShutterButtonClick() before the focus kicks in.
-   */
-  private void requestDelayedAutoFocus() {
-    // Wait 350 ms before focusing to avoid interfering with quick button presses when
-    // the user just wants to take a picture without focusing.
-    cameraManager.requestAutoFocus(350L);
-  }
-
-  static boolean getFirstLaunch() {
-    return isFirstLaunch;
-  }
-
-  /**
-   * We want the help screen to be shown automatically the first time a new version of the app is
-   * run. The easiest way to do this is to check android:versionCode from the manifest, and compare
-   * it to a value stored as a preference.
-   */
-  private boolean checkFirstLaunch() {
-    try {
-      PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
-      int currentVersion = info.versionCode;
-      SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-      int lastVersion = prefs.getInt(PreferencesActivity.KEY_HELP_VERSION_SHOWN, 0);
-      if (lastVersion == 0) {
-        isFirstLaunch = true;
-      } else {
-        isFirstLaunch = false;
-      }
-    } catch (PackageManager.NameNotFoundException e) {
-      Log.w(TAG, e);
-    }
-    return false;
-  }
-
-  /**
-   * Returns a string that represents which OCR engine(s) are currently set to be run.
-   *
-   * @return OCR engine mode
-   */
-  String getOcrEngineModeName() {
-    String ocrEngineModeName = "";
-    String[] ocrEngineModes = getResources().getStringArray(R.array.ocrenginemodes);
-    if (ocrEngineMode == TessBaseAPI.OEM_TESSERACT_ONLY) {
-      ocrEngineModeName = ocrEngineModes[0];
-    } else if (ocrEngineMode == TessBaseAPI.OEM_CUBE_ONLY) {
-      ocrEngineModeName = ocrEngineModes[1];
-    } else if (ocrEngineMode == TessBaseAPI.OEM_TESSERACT_CUBE_COMBINED) {
-      ocrEngineModeName = ocrEngineModes[2];
-    }
-    return ocrEngineModeName;
-  }
-
-  /**
-   * Gets values from shared preferences and sets the corresponding data members in this activity.
-   */
-  private void retrievePreferences() {
+    /**
+     * Gets values from shared preferences and sets the corresponding data members in this activity.
+     */
+    private void retrievePreferences() {
       prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
       // Retrieve from preferences, and set in this Activity, the language preferences
@@ -1147,92 +1152,92 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       prefs.registerOnSharedPreferenceChangeListener(listener);
 
       beepManager.updatePrefs();
-  }
+    }
 
-  /**
-   * Sets default values for preferences. To be called the first time this app is run.
-   */
-  private void setDefaultPreferences() {
-    prefs = PreferenceManager.getDefaultSharedPreferences(this);
+    /**
+     * Sets default values for preferences. To be called the first time this app is run.
+     */
+    private void setDefaultPreferences() {
+      prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-    // Continuous preview
-    prefs.edit().putBoolean(PreferencesActivity.KEY_CONTINUOUS_PREVIEW, CaptureActivity.DEFAULT_TOGGLE_CONTINUOUS).commit();
+      // Continuous preview
+      prefs.edit().putBoolean(PreferencesActivity.KEY_CONTINUOUS_PREVIEW, CaptureActivity.DEFAULT_TOGGLE_CONTINUOUS).commit();
 
-    // Recognition language
-    prefs.edit().putString(PreferencesActivity.KEY_SOURCE_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE).commit();
+      // Recognition language
+      prefs.edit().putString(PreferencesActivity.KEY_SOURCE_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE).commit();
 
-    // Translation
-    prefs.edit().putBoolean(PreferencesActivity.KEY_TOGGLE_TRANSLATION, CaptureActivity.DEFAULT_TOGGLE_TRANSLATION).commit();
+      // Translation
+      prefs.edit().putBoolean(PreferencesActivity.KEY_TOGGLE_TRANSLATION, CaptureActivity.DEFAULT_TOGGLE_TRANSLATION).commit();
 
-    // Translation target language
-    prefs.edit().putString(PreferencesActivity.KEY_TARGET_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE).commit();
+      // Translation target language
+      prefs.edit().putString(PreferencesActivity.KEY_TARGET_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE).commit();
 
-    // Translator
-    prefs.edit().putString(PreferencesActivity.KEY_TRANSLATOR, CaptureActivity.DEFAULT_TRANSLATOR).commit();
+      // Translator
+      prefs.edit().putString(PreferencesActivity.KEY_TRANSLATOR, CaptureActivity.DEFAULT_TRANSLATOR).commit();
 
-    // OCR Engine
-    prefs.edit().putString(PreferencesActivity.KEY_OCR_ENGINE_MODE, CaptureActivity.DEFAULT_OCR_ENGINE_MODE).commit();
+      // OCR Engine
+      prefs.edit().putString(PreferencesActivity.KEY_OCR_ENGINE_MODE, CaptureActivity.DEFAULT_OCR_ENGINE_MODE).commit();
 
-    // Autofocus
-    prefs.edit().putBoolean(PreferencesActivity.KEY_AUTO_FOCUS, CaptureActivity.DEFAULT_TOGGLE_AUTO_FOCUS).commit();
+      // Autofocus
+      prefs.edit().putBoolean(PreferencesActivity.KEY_AUTO_FOCUS, CaptureActivity.DEFAULT_TOGGLE_AUTO_FOCUS).commit();
 
-    // Disable problematic focus modes
-    prefs.edit().putBoolean(PreferencesActivity.KEY_DISABLE_CONTINUOUS_FOCUS, CaptureActivity.DEFAULT_DISABLE_CONTINUOUS_FOCUS).commit();
+      // Disable problematic focus modes
+      prefs.edit().putBoolean(PreferencesActivity.KEY_DISABLE_CONTINUOUS_FOCUS, CaptureActivity.DEFAULT_DISABLE_CONTINUOUS_FOCUS).commit();
 
-    // Beep
-    prefs.edit().putBoolean(PreferencesActivity.KEY_PLAY_BEEP, CaptureActivity.DEFAULT_TOGGLE_BEEP).commit();
+      // Beep
+      prefs.edit().putBoolean(PreferencesActivity.KEY_PLAY_BEEP, CaptureActivity.DEFAULT_TOGGLE_BEEP).commit();
 
-    // Character blacklist
-    prefs.edit().putString(PreferencesActivity.KEY_CHARACTER_BLACKLIST,
+      // Character blacklist
+      prefs.edit().putString(PreferencesActivity.KEY_CHARACTER_BLACKLIST,
         OcrCharacterHelper.getDefaultBlacklist(CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE)).commit();
 
-    // Character whitelist
-    prefs.edit().putString(PreferencesActivity.KEY_CHARACTER_WHITELIST,
+      // Character whitelist
+      prefs.edit().putString(PreferencesActivity.KEY_CHARACTER_WHITELIST,
         OcrCharacterHelper.getDefaultWhitelist(CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE)).commit();
 
-    // Page segmentation mode
-    prefs.edit().putString(PreferencesActivity.KEY_PAGE_SEGMENTATION_MODE, CaptureActivity.DEFAULT_PAGE_SEGMENTATION_MODE).commit();
+      // Page segmentation mode
+      prefs.edit().putString(PreferencesActivity.KEY_PAGE_SEGMENTATION_MODE, CaptureActivity.DEFAULT_PAGE_SEGMENTATION_MODE).commit();
 
-    // Reversed camera image
-    prefs.edit().putBoolean(PreferencesActivity.KEY_REVERSE_IMAGE, CaptureActivity.DEFAULT_TOGGLE_REVERSED_IMAGE).commit();
+      // Reversed camera image
+      prefs.edit().putBoolean(PreferencesActivity.KEY_REVERSE_IMAGE, CaptureActivity.DEFAULT_TOGGLE_REVERSED_IMAGE).commit();
 
-    // Light
-    prefs.edit().putBoolean(PreferencesActivity.KEY_TOGGLE_LIGHT, CaptureActivity.DEFAULT_TOGGLE_LIGHT).commit();
-  }
-
-  void displayProgressDialog() {
-    // Set up the indeterminate progress dialog box
-    indeterminateDialog = new ProgressDialog(this);
-    indeterminateDialog.setTitle("Please wait");
-    String ocrEngineModeName = getOcrEngineModeName();
-    if (ocrEngineModeName.equals("Both")) {
-      indeterminateDialog.setMessage("Performing OCR using Cube and Tesseract...");
-    } else {
-      indeterminateDialog.setMessage("Performing OCR using " + ocrEngineModeName + "...");
+      // Light
+      prefs.edit().putBoolean(PreferencesActivity.KEY_TOGGLE_LIGHT, CaptureActivity.DEFAULT_TOGGLE_LIGHT).commit();
     }
-    indeterminateDialog.setCancelable(false);
-    indeterminateDialog.show();
-  }
 
-  ProgressDialog getProgressDialog() {
-    return indeterminateDialog;
-  }
+    void displayProgressDialog() {
+      // Set up the indeterminate progress dialog box
+      indeterminateDialog = new ProgressDialog(this);
+      indeterminateDialog.setTitle("Please wait");
+      String ocrEngineModeName = getOcrEngineModeName();
+      if (ocrEngineModeName.equals("Both")) {
+        indeterminateDialog.setMessage("Performing OCR using Cube and Tesseract...");
+      } else {
+        indeterminateDialog.setMessage("Performing OCR using " + ocrEngineModeName + "...");
+      }
+      indeterminateDialog.setCancelable(false);
+      indeterminateDialog.show();
+    }
 
-  /**
-   * Displays an error message dialog box to the user on the UI thread.
-   *
-   * @param title The title for the dialog box
-   * @param message The error message to be displayed
-   */
-  void showErrorMessage(String title, String message) {
-	  new AlertDialog.Builder(this)
-	    .setTitle(title)
-	    .setMessage(message)
-	    .setOnCancelListener(new FinishListener(this))
-	    .setPositiveButton( "Done", new FinishListener(this))
-	    .show();
+    ProgressDialog getProgressDialog() {
+      return indeterminateDialog;
+    }
+
+    /**
+     * Displays an error message dialog box to the user on the UI thread.
+     *
+     * @param title The title for the dialog box
+     * @param message The error message to be displayed
+     */
+    void showErrorMessage(String title, String message) {
+      new AlertDialog.Builder(this)
+        .setTitle(title)
+        .setMessage(message)
+        .setOnCancelListener(new FinishListener(this))
+        .setPositiveButton("Done", new FinishListener(this))
+        .show();
+    }
   }
-}
 
 
 
@@ -1276,11 +1281,11 @@ class ViewfinderView extends View {
   private final int cornerColor;
   private OcrResultText resultText;
   private String[] words;
-  private List<Rect> regionBoundingBoxes;
-  private List<Rect> textlineBoundingBoxes;
-  private List<Rect> stripBoundingBoxes;
-  private List<Rect> wordBoundingBoxes;
-  private List<Rect> characterBoundingBoxes;
+  private List < Rect > regionBoundingBoxes;
+  private List < Rect > textlineBoundingBoxes;
+  private List < Rect > stripBoundingBoxes;
+  private List < Rect > wordBoundingBoxes;
+  private List < Rect > characterBoundingBoxes;
   //  Rect bounds;
   private Rect previewFrame;
   private Rect rect;
@@ -1305,8 +1310,8 @@ class ViewfinderView extends View {
     this.cameraManager = cameraManager;
   }
 
-  @SuppressWarnings("unused")
-  @Override
+  @
+  SuppressWarnings("unused")@ Override
   public void onDraw(Canvas canvas) {
     Rect frame = cameraManager.getFramingRect();
     if (frame == null) {
@@ -1343,9 +1348,9 @@ class ViewfinderView extends View {
             paint.setStrokeWidth(1);
             rect = regionBoundingBoxes.get(i);
             canvas.drawRect(frame.left + rect.left * scaleX,
-                frame.top + rect.top * scaleY,
-                frame.left + rect.right * scaleX,
-                frame.top + rect.bottom * scaleY, paint);
+              frame.top + rect.top * scaleY,
+              frame.left + rect.right * scaleX,
+              frame.top + rect.bottom * scaleY, paint);
           }
         }
 
@@ -1359,9 +1364,9 @@ class ViewfinderView extends View {
           for (int i = 0; i < textlineBoundingBoxes.size(); i++) {
             rect = textlineBoundingBoxes.get(i);
             canvas.drawRect(frame.left + rect.left * scaleX,
-                frame.top + rect.top * scaleY,
-                frame.left + rect.right * scaleX,
-                frame.top + rect.bottom * scaleY, paint);
+              frame.top + rect.top * scaleY,
+              frame.left + rect.right * scaleX,
+              frame.top + rect.bottom * scaleY, paint);
           }
         }
 
@@ -1374,9 +1379,9 @@ class ViewfinderView extends View {
           for (int i = 0; i < stripBoundingBoxes.size(); i++) {
             rect = stripBoundingBoxes.get(i);
             canvas.drawRect(frame.left + rect.left * scaleX,
-                frame.top + rect.top * scaleY,
-                frame.left + rect.right * scaleX,
-                frame.top + rect.bottom * scaleY, paint);
+              frame.top + rect.top * scaleY,
+              frame.left + rect.right * scaleX,
+              frame.top + rect.bottom * scaleY, paint);
           }
         }
 
@@ -1399,15 +1404,15 @@ class ViewfinderView extends View {
             // Draw a bounding box around the word
             rect = wordBoundingBoxes.get(i);
             canvas.drawRect(
-                frame.left + rect.left * scaleX,
-                frame.top + rect.top * scaleY,
-                frame.left + rect.right * scaleX,
-                frame.top + rect.bottom * scaleY, paint);
+              frame.left + rect.left * scaleX,
+              frame.top + rect.top * scaleY,
+              frame.left + rect.right * scaleX,
+              frame.top + rect.bottom * scaleY, paint);
           }
         }
 
         if (DRAW_WORD_TEXT) {
-          words = resultText.getText().replace("\n"," ").split(" ");
+          words = resultText.getText().replace("\n", " ").split(" ");
           int[] wordConfidences = resultText.getWordConfidences();
           for (int i = 0; i < wordBoundingBoxes.size(); i++) {
             boolean isWordBlank = true;
@@ -1432,9 +1437,9 @@ class ViewfinderView extends View {
                 paint.setAlpha(255);
               }
               canvas.drawRect(frame.left + rect.left * scaleX,
-                  frame.top + rect.top * scaleY,
-                  frame.left + rect.right * scaleX,
-                  frame.top + rect.bottom * scaleY, paint);
+                frame.top + rect.top * scaleY,
+                frame.left + rect.right * scaleX,
+                frame.top + rect.bottom * scaleY, paint);
 
               // Draw the word in black text
               paint.setColor(Color.BLACK);
@@ -1451,7 +1456,7 @@ class ViewfinderView extends View {
               // get the height that would have been produced
               int h = bounds.bottom - bounds.top;
               // figure out what textSize setting would create that height of text
-              float size  = (((float)(rect.height())/h)*100f);
+              float size = (((float)(rect.height()) / h) * 100f);
               // and set it into the paint
               paint.setTextSize(size);
               // Now set the scale.
@@ -1462,10 +1467,10 @@ class ViewfinderView extends View {
               // determine the width
               int w = bounds.right - bounds.left;
               // calculate the baseline to use so that the entire text is visible including the descenders
-              int text_h = bounds.bottom-bounds.top;
-              int baseline =bounds.bottom+((rect.height()-text_h)/2);
+              int text_h = bounds.bottom - bounds.top;
+              int baseline = bounds.bottom + ((rect.height() - text_h) / 2);
               // determine how much to scale the width to fit the view
-              float xscale = ((float) (rect.width())) / w;
+              float xscale = ((float)(rect.width())) / w;
               // set the scale for the text paint
               paint.setTextScaleX(xscale);
               canvas.drawText(words[i], frame.left + rect.left * scaleX, frame.top + rect.bottom * scaleY - baseline, paint);
@@ -1474,80 +1479,80 @@ class ViewfinderView extends View {
           }
         }
 
-//        if (DRAW_CHARACTER_BOXES || DRAW_CHARACTER_TEXT) {
-//          characterBoundingBoxes = resultText.getCharacterBoundingBoxes();
-//        }
-//
-//        if (DRAW_CHARACTER_BOXES) {
-//          // Draw bounding boxes around each character
-//          paint.setAlpha(0xA0);
-//          paint.setColor(0xFF00FF00);
-//          paint.setStyle(Style.STROKE);
-//          paint.setStrokeWidth(1);
-//          for (int c = 0; c < characterBoundingBoxes.size(); c++) {
-//            Rect characterRect = characterBoundingBoxes.get(c);
-//            canvas.drawRect(frame.left + characterRect.left * scaleX,
-//                frame.top + characterRect.top * scaleY,
-//                frame.left + characterRect.right * scaleX,
-//                frame.top + characterRect.bottom * scaleY, paint);
-//          }
-//        }
-//
-//        if (DRAW_CHARACTER_TEXT) {
-//          // Draw letters individually
-//          for (int i = 0; i < characterBoundingBoxes.size(); i++) {
-//            Rect r = characterBoundingBoxes.get(i);
-//
-//            // Draw a white background for every letter
-//            int meanConfidence = resultText.getMeanConfidence();
-//            paint.setColor(Color.WHITE);
-//            paint.setAlpha(meanConfidence * (255 / 100));
-//            paint.setStyle(Style.FILL);
-//            canvas.drawRect(frame.left + r.left * scaleX,
-//                frame.top + r.top * scaleY,
-//                frame.left + r.right * scaleX,
-//                frame.top + r.bottom * scaleY, paint);
-//
-//            // Draw each letter, in black
-//            paint.setColor(Color.BLACK);
-//            paint.setAlpha(0xFF);
-//            paint.setAntiAlias(true);
-//            paint.setTextAlign(Align.LEFT);
-//            String letter = "";
-//            try {
-//              char c = resultText.getText().replace("\n","").replace(" ", "").charAt(i);
-//              letter = Character.toString(c);
-//
-//              if (!letter.equals("-") && !letter.equals("_")) {
-//
-//                // Adjust text size to fill rect
-//                paint.setTextSize(100);
-//                paint.setTextScaleX(1.0f);
-//
-//                // ask the paint for the bounding rect if it were to draw this text
-//                Rect bounds = new Rect();
-//                paint.getTextBounds(letter, 0, letter.length(), bounds);
-//
-//                // get the height that would have been produced
-//                int h = bounds.bottom - bounds.top;
-//
-//                // figure out what textSize setting would create that height of text
-//                float size  = (((float)(r.height())/h)*100f);
-//
-//                // and set it into the paint
-//                paint.setTextSize(size);
-//
-//                // Draw the text as is. We don't really need to set the text scale, because the dimensions
-//                // of the Rect should already be suited for drawing our letter.
-//                canvas.drawText(letter, frame.left + r.left * scaleX, frame.top + r.bottom * scaleY, paint);
-//              }
-//            } catch (StringIndexOutOfBoundsException e) {
-//              e.printStackTrace();
-//            } catch (Exception e) {
-//              e.printStackTrace();
-//            }
-//          }
-//        }
+        //        if (DRAW_CHARACTER_BOXES || DRAW_CHARACTER_TEXT) {
+        //          characterBoundingBoxes = resultText.getCharacterBoundingBoxes();
+        //        }
+        //
+        //        if (DRAW_CHARACTER_BOXES) {
+        //          // Draw bounding boxes around each character
+        //          paint.setAlpha(0xA0);
+        //          paint.setColor(0xFF00FF00);
+        //          paint.setStyle(Style.STROKE);
+        //          paint.setStrokeWidth(1);
+        //          for (int c = 0; c < characterBoundingBoxes.size(); c++) {
+        //            Rect characterRect = characterBoundingBoxes.get(c);
+        //            canvas.drawRect(frame.left + characterRect.left * scaleX,
+        //                frame.top + characterRect.top * scaleY,
+        //                frame.left + characterRect.right * scaleX,
+        //                frame.top + characterRect.bottom * scaleY, paint);
+        //          }
+        //        }
+        //
+        //        if (DRAW_CHARACTER_TEXT) {
+        //          // Draw letters individually
+        //          for (int i = 0; i < characterBoundingBoxes.size(); i++) {
+        //            Rect r = characterBoundingBoxes.get(i);
+        //
+        //            // Draw a white background for every letter
+        //            int meanConfidence = resultText.getMeanConfidence();
+        //            paint.setColor(Color.WHITE);
+        //            paint.setAlpha(meanConfidence * (255 / 100));
+        //            paint.setStyle(Style.FILL);
+        //            canvas.drawRect(frame.left + r.left * scaleX,
+        //                frame.top + r.top * scaleY,
+        //                frame.left + r.right * scaleX,
+        //                frame.top + r.bottom * scaleY, paint);
+        //
+        //            // Draw each letter, in black
+        //            paint.setColor(Color.BLACK);
+        //            paint.setAlpha(0xFF);
+        //            paint.setAntiAlias(true);
+        //            paint.setTextAlign(Align.LEFT);
+        //            String letter = "";
+        //            try {
+        //              char c = resultText.getText().replace("\n","").replace(" ", "").charAt(i);
+        //              letter = Character.toString(c);
+        //
+        //              if (!letter.equals("-") && !letter.equals("_")) {
+        //
+        //                // Adjust text size to fill rect
+        //                paint.setTextSize(100);
+        //                paint.setTextScaleX(1.0f);
+        //
+        //                // ask the paint for the bounding rect if it were to draw this text
+        //                Rect bounds = new Rect();
+        //                paint.getTextBounds(letter, 0, letter.length(), bounds);
+        //
+        //                // get the height that would have been produced
+        //                int h = bounds.bottom - bounds.top;
+        //
+        //                // figure out what textSize setting would create that height of text
+        //                float size  = (((float)(r.height())/h)*100f);
+        //
+        //                // and set it into the paint
+        //                paint.setTextSize(size);
+        //
+        //                // Draw the text as is. We don't really need to set the text scale, because the dimensions
+        //                // of the Rect should already be suited for drawing our letter.
+        //                canvas.drawText(letter, frame.left + r.left * scaleX, frame.top + r.bottom * scaleY, paint);
+        //              }
+        //            } catch (StringIndexOutOfBoundsException e) {
+        //              e.printStackTrace();
+        //            } catch (Exception e) {
+        //              e.printStackTrace();
+        //            }
+        //          }
+        //        }
       }
 
     }
@@ -1651,42 +1656,43 @@ class CaptureActivityHandler extends Handler {
     }
   }
 
-  @Override
+  @
+  Override
   public void handleMessage(Message message) {
 
     if (message.what == R.id.restart_preview) {
-		restartOcrPreview();
-	} else if (message.what == R.id.ocr_continuous_decode_failed) {
-		DecodeHandler.resetDecodeState();
-		try {
-          activity.handleOcrContinuousDecode((OcrResultFailure) message.obj);
-        } catch (NullPointerException e) {
-          Log.w(TAG, "got bad OcrResultFailure", e);
-        }
-		if (state == State.CONTINUOUS) {
-          restartOcrPreviewAndDecode();
-        }
-	} else if (message.what == R.id.ocr_continuous_decode_succeeded) {
-		DecodeHandler.resetDecodeState();
-		try {
-          activity.handleOcrContinuousDecode((OcrResult) message.obj);
-        } catch (NullPointerException e) {
-          // Continue
-        }
-		if (state == State.CONTINUOUS) {
-          restartOcrPreviewAndDecode();
-        }
-	} else if (message.what == R.id.ocr_decode_succeeded) {
-		state = State.SUCCESS;
-		activity.setShutterButtonClickable(true);
-		activity.handleOcrDecode((OcrResult) message.obj);
-	} else if (message.what == R.id.ocr_decode_failed) {
-		state = State.PREVIEW;
-		activity.setShutterButtonClickable(true);
-		Toast toast = Toast.makeText(activity.getBaseContext(), "OCR failed. Please try again.", Toast.LENGTH_SHORT);
-		toast.setGravity(Gravity.TOP, 0, 0);
-		toast.show();
-	}
+      restartOcrPreview();
+    } else if (message.what == R.id.ocr_continuous_decode_failed) {
+      DecodeHandler.resetDecodeState();
+      try {
+        activity.handleOcrContinuousDecode((OcrResultFailure) message.obj);
+      } catch (NullPointerException e) {
+        Log.w(TAG, "got bad OcrResultFailure", e);
+      }
+      if (state == State.CONTINUOUS) {
+        restartOcrPreviewAndDecode();
+      }
+    } else if (message.what == R.id.ocr_continuous_decode_succeeded) {
+      DecodeHandler.resetDecodeState();
+      try {
+        activity.handleOcrContinuousDecode((OcrResult) message.obj);
+      } catch (NullPointerException e) {
+        // Continue
+      }
+      if (state == State.CONTINUOUS) {
+        restartOcrPreviewAndDecode();
+      }
+    } else if (message.what == R.id.ocr_decode_succeeded) {
+      state = State.SUCCESS;
+      activity.setShutterButtonClickable(true);
+      activity.handleOcrDecode((OcrResult) message.obj);
+    } else if (message.what == R.id.ocr_decode_failed) {
+      state = State.PREVIEW;
+      activity.setShutterButtonClickable(true);
+      Toast toast = Toast.makeText(activity.getBaseContext(), "OCR failed. Please try again.", Toast.LENGTH_SHORT);
+      toast.setGravity(Gravity.TOP, 0, 0);
+      toast.show();
+    }
   }
 
   void stop() {
@@ -1701,7 +1707,7 @@ class CaptureActivityHandler extends Handler {
     removeMessages(R.id.ocr_continuous_decode_succeeded); // TODO are these removeMessages() calls doing anything?
 
     // Freeze the view displayed to the user.
-//    CameraManager.get().stopPreview();
+    //    CameraManager.get().stopPreview();
   }
 
   void resetState() {
@@ -1803,9 +1809,9 @@ class AutoFocusManager implements Camera.AutoFocusCallback {
   private static final String TAG = AutoFocusManager.class.getSimpleName();
 
   private static final long AUTO_FOCUS_INTERVAL_MS = 3500L;
-  private static final Collection<String> FOCUS_MODES_CALLING_AF;
+  private static final Collection < String > FOCUS_MODES_CALLING_AF;
   static {
-    FOCUS_MODES_CALLING_AF = new ArrayList<String>(2);
+    FOCUS_MODES_CALLING_AF = new ArrayList < String > (2);
     FOCUS_MODES_CALLING_AF.add(Camera.Parameters.FOCUS_MODE_AUTO);
     FOCUS_MODES_CALLING_AF.add(Camera.Parameters.FOCUS_MODE_MACRO);
   }
@@ -1823,18 +1829,19 @@ class AutoFocusManager implements Camera.AutoFocusCallback {
     SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
     String currentFocusMode = camera.getParameters().getFocusMode();
     useAutoFocus =
-        sharedPrefs.getBoolean(PreferencesActivity.KEY_AUTO_FOCUS, true) &&
-        FOCUS_MODES_CALLING_AF.contains(currentFocusMode);
+      sharedPrefs.getBoolean(PreferencesActivity.KEY_AUTO_FOCUS, true) &&
+      FOCUS_MODES_CALLING_AF.contains(currentFocusMode);
     Log.i(TAG, "Current focus mode '" + currentFocusMode + "'; use auto focus? " + useAutoFocus);
     manual = false;
     checkAndStart();
   }
 
-  @Override
+  @
+  Override
   public synchronized void onAutoFocus(boolean success, Camera theCamera) {
     if (active && !manual) {
-      outstandingTask = new TimerTask() {
-        @Override
+      outstandingTask = new TimerTask() {@
+        Override
         public void run() {
           checkAndStart();
         }
@@ -1845,19 +1852,19 @@ class AutoFocusManager implements Camera.AutoFocusCallback {
   }
 
   void checkAndStart() {
-  	if (useAutoFocus) {
-  	  active = true;
+    if (useAutoFocus) {
+      active = true;
       start();
     }
   }
 
   synchronized void start() {
-	  try {
-		  camera.autoFocus(this);
-	  } catch (RuntimeException re) {
-		  // Have heard RuntimeException reported in Android 4.0.x+; continue?
-		  Log.w(TAG, "Unexpected exception while focusing", re);
-	  }
+    try {
+      camera.autoFocus(this);
+    } catch (RuntimeException re) {
+      // Have heard RuntimeException reported in Android 4.0.x+; continue?
+      Log.w(TAG, "Unexpected exception while focusing", re);
+    }
   }
 
   /**
@@ -1865,14 +1872,14 @@ class AutoFocusManager implements Camera.AutoFocusCallback {
    * @param delay Time to wait before auto-focusing, in milliseconds
    */
   synchronized void start(long delay) {
-  	outstandingTask = new TimerTask() {
-  		@Override
-  		public void run() {
-  			manual = true;
-  			start();
-  		}
-  	};
-  	timer.schedule(outstandingTask, delay);
+    outstandingTask = new TimerTask() {@
+      Override
+      public void run() {
+        manual = true;
+        start();
+      }
+    };
+    timer.schedule(outstandingTask, delay);
   }
 
   synchronized void stop() {
@@ -1925,10 +1932,10 @@ class CameraConfigurationManager {
     // We're landscape-only, and have apparently seen issues with display thinking it's portrait
     // when waking from sleep. If it's not landscape, assume it's mistaken and reverse them:
     //!! if (width < height) {
-      //!! Log.i(TAG, "Display reports portrait orientation; assuming this is incorrect");
-      //!! int temp = width;
-      //!! width = height;
-      //!! height = temp;
+    //!! Log.i(TAG, "Display reports portrait orientation; assuming this is incorrect");
+    //!! int temp = width;
+    //!! width = height;
+    //!! height = temp;
     //!! }
     screenResolution = new Point(width, height);
     Log.i(TAG, "Screen resolution: " + screenResolution);
@@ -1951,19 +1958,19 @@ class CameraConfigurationManager {
     if (prefs.getBoolean(PreferencesActivity.KEY_AUTO_FOCUS, true)) {
       if (prefs.getBoolean(PreferencesActivity.KEY_DISABLE_CONTINUOUS_FOCUS, false)) {
         focusMode = findSettableValue(parameters.getSupportedFocusModes(),
-            Camera.Parameters.FOCUS_MODE_AUTO);
+          Camera.Parameters.FOCUS_MODE_AUTO);
       } else {
         focusMode = findSettableValue(parameters.getSupportedFocusModes(),
-            "continuous-video", // Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO in 4.0+
-            "continuous-picture", // Camera.Paramters.FOCUS_MODE_CONTINUOUS_PICTURE in 4.0+
-            Camera.Parameters.FOCUS_MODE_AUTO);
+          "continuous-video", // Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO in 4.0+
+          "continuous-picture", // Camera.Paramters.FOCUS_MODE_CONTINUOUS_PICTURE in 4.0+
+          Camera.Parameters.FOCUS_MODE_AUTO);
       }
     }
     // Maybe selected auto-focus but not available, so fall through here:
     if (focusMode == null) {
       focusMode = findSettableValue(parameters.getSupportedFocusModes(),
-                                    Camera.Parameters.FOCUS_MODE_MACRO,
-                                    "edof"); // Camera.Parameters.FOCUS_MODE_EDOF in 2.2+
+        Camera.Parameters.FOCUS_MODE_MACRO,
+        "edof"); // Camera.Parameters.FOCUS_MODE_EDOF in 2.2+
     }
     if (focusMode != null) {
       parameters.setFocusMode(focusMode);
@@ -2003,11 +2010,11 @@ class CameraConfigurationManager {
     String flashMode;
     if (newSetting) {
       flashMode = findSettableValue(parameters.getSupportedFlashModes(),
-                                    Camera.Parameters.FLASH_MODE_TORCH,
-                                    Camera.Parameters.FLASH_MODE_ON);
+        Camera.Parameters.FLASH_MODE_TORCH,
+        Camera.Parameters.FLASH_MODE_ON);
     } else {
       flashMode = findSettableValue(parameters.getSupportedFlashModes(),
-                                    Camera.Parameters.FLASH_MODE_OFF);
+        Camera.Parameters.FLASH_MODE_OFF);
     }
     if (flashMode != null) {
       parameters.setFlashMode(flashMode);
@@ -2017,9 +2024,9 @@ class CameraConfigurationManager {
   private Point findBestPreviewSizeValue(Camera.Parameters parameters, Point screenResolution) {
 
     // Sort by size, descending
-    List<Camera.Size> supportedPreviewSizes = new ArrayList<Camera.Size>(parameters.getSupportedPreviewSizes());
-    Collections.sort(supportedPreviewSizes, new Comparator<Camera.Size>() {
-      @Override
+    List < Camera.Size > supportedPreviewSizes = new ArrayList < Camera.Size > (parameters.getSupportedPreviewSizes());
+    Collections.sort(supportedPreviewSizes, new Comparator < Camera.Size > () {@
+      Override
       public int compare(Camera.Size a, Camera.Size b) {
         int aPixels = a.height * a.width;
         int bPixels = b.height * b.width;
@@ -2035,9 +2042,9 @@ class CameraConfigurationManager {
 
     if (Log.isLoggable(TAG, Log.INFO)) {
       StringBuilder previewSizesString = new StringBuilder();
-      for (Camera.Size supportedPreviewSize : supportedPreviewSizes) {
+      for (Camera.Size supportedPreviewSize: supportedPreviewSizes) {
         previewSizesString.append(supportedPreviewSize.width).append('x')
-        .append(supportedPreviewSize.height).append(' ');
+          .append(supportedPreviewSize.height).append(' ');
       }
       Log.i(TAG, "Supported preview sizes: " + previewSizesString);
     }
@@ -2046,7 +2053,7 @@ class CameraConfigurationManager {
     float screenAspectRatio = (float) screenResolution.x / (float) screenResolution.y;
 
     float diff = Float.POSITIVE_INFINITY;
-    for (Camera.Size supportedPreviewSize : supportedPreviewSizes) {
+    for (Camera.Size supportedPreviewSize: supportedPreviewSizes) {
       int realWidth = supportedPreviewSize.width;
       int realHeight = supportedPreviewSize.height;
       int pixels = realWidth * realHeight;
@@ -2054,9 +2061,9 @@ class CameraConfigurationManager {
         continue;
       }
       boolean isCandidatePortrait = realWidth < realHeight;
-        Point exactPoint = new Point(realWidth, realHeight);
-        Log.i(TAG, "Found preview size exactly matching screen size: " + exactPoint);
-        return exactPoint;
+      Point exactPoint = new Point(realWidth, realHeight);
+      Log.i(TAG, "Found preview size exactly matching screen size: " + exactPoint);
+      return exactPoint;
     }
 
     if (bestSize == null) {
@@ -2069,12 +2076,12 @@ class CameraConfigurationManager {
     return bestSize;
   }
 
-  private static String findSettableValue(Collection<String> supportedValues,
-                                          String... desiredValues) {
+  private static String findSettableValue(Collection < String > supportedValues,
+    String...desiredValues) {
     Log.i(TAG, "Supported values: " + supportedValues);
     String result = null;
     if (supportedValues != null) {
-      for (String desiredValue : desiredValues) {
+      for (String desiredValue: desiredValues) {
         if (supportedValues.contains(desiredValue)) {
           result = desiredValue;
           break;
@@ -2112,13 +2119,14 @@ final class PreviewCallback implements Camera.PreviewCallback {
 
   // Since we're not calling setPreviewFormat(int), the data arrives here in the YCbCr_420_SP
   // (NV21) format.
-  @Override
+  @
+  Override
   public void onPreviewFrame(byte[] data, Camera camera) {
     Point cameraResolution = configManager.getCameraResolution();
     Handler thePreviewHandler = previewHandler;
     if (cameraResolution != null && thePreviewHandler != null) {
       Message message = thePreviewHandler.obtainMessage(previewMessage, cameraResolution.x,
-          cameraResolution.y, data);
+        cameraResolution.y, data);
       message.sendToTarget();
       previewHandler = null;
     } else {
@@ -2232,10 +2240,10 @@ class CameraManager {
    */
   public synchronized void stopPreview() {
     if (autoFocusManager != null) {
-    	autoFocusManager.stop();
-    	autoFocusManager = null;
+      autoFocusManager.stop();
+      autoFocusManager = null;
     }
-  	if (camera != null && previewing) {
+    if (camera != null && previewing) {
       camera.stopPreview();
       previewCallback.setHandler(null, 0);
       previewing = false;
@@ -2263,7 +2271,7 @@ class CameraManager {
    * @param delay Time delay to send with the request
    */
   public synchronized void requestAutoFocus(long delay) {
-  	autoFocusManager.start(delay);
+    autoFocusManager.start(delay);
   }
 
   /**
@@ -2283,13 +2291,13 @@ class CameraManager {
         // Called early, before init even finished
         return null;
       }
-      int width = screenResolution.x * 3/5;
+      int width = screenResolution.x * 3 / 5;
       if (width < MIN_FRAME_WIDTH) {
         width = MIN_FRAME_WIDTH;
       } else if (width > MAX_FRAME_WIDTH) {
         width = MAX_FRAME_WIDTH;
       }
-      int height = screenResolution.y * 1/5;
+      int height = screenResolution.y * 1 / 5;
       if (height < MIN_FRAME_HEIGHT) {
         height = MIN_FRAME_HEIGHT;
       } else if (height > MAX_FRAME_HEIGHT) {
@@ -2370,7 +2378,7 @@ class CameraManager {
     }
     // Go ahead and assume it's YUV rather than die.
     return new PlanarYUVLuminanceSource(data, width, height, rect.left, rect.top,
-                                        rect.width(), rect.height(), reverseImage);
+      rect.width(), rect.height(), reverseImage);
   }
 
 }
@@ -2383,43 +2391,43 @@ class CameraManager {
  * codes, and converting language codes to language names.
  */
 class LanguageCodeHelper {
-	public static final String TAG = "LanguageCodeHelper";
+  public static final String TAG = "LanguageCodeHelper";
 
-	/**
-	 * Private constructor to enforce noninstantiability
-	 */
-	private LanguageCodeHelper() {
-		throw new AssertionError();
-	}
+  /**
+   * Private constructor to enforce noninstantiability
+   */
+  private LanguageCodeHelper() {
+    throw new AssertionError();
+  }
 
-	/**
-	 * Map an ISO 639-3 language code to an ISO 639-1 language code.
-	 *
-	 * There is one entry here for each language recognized by the OCR engine.
-	 *
-	 * @param languageCode
-	 *            ISO 639-3 language code
-	 * @return ISO 639-1 language code
-	 */
-	public static String mapLanguageCode(String languageCode) {
-	  if (languageCode.equals("afr")) { // Afrikaans
-	    return "af";
-	  } else if (languageCode.equals("sqi")) { // Albanian
-	    return "sq";
-	  } else if (languageCode.equals("ara")) { // Arabic
-	    return "ar";
-	  } else if (languageCode.equals("aze")) { // Azeri
-	    return "az";
-	  } else if (languageCode.equals("eus")) { // Basque
-	    return "eu";
-	  } else if (languageCode.equals("bel")) { // Belarusian
-	    return "be";
-	  } else if (languageCode.equals("ben")) { // Bengali
-	    return "bn";
-	  } else if (languageCode.equals("bul")) { // Bulgarian
-	    return "bg";
-	  } else if (languageCode.equals("cat")) { // Catalan
-	    return "ca";
+  /**
+   * Map an ISO 639-3 language code to an ISO 639-1 language code.
+   *
+   * There is one entry here for each language recognized by the OCR engine.
+   *
+   * @param languageCode
+   *            ISO 639-3 language code
+   * @return ISO 639-1 language code
+   */
+  public static String mapLanguageCode(String languageCode) {
+    if (languageCode.equals("afr")) { // Afrikaans
+      return "af";
+    } else if (languageCode.equals("sqi")) { // Albanian
+      return "sq";
+    } else if (languageCode.equals("ara")) { // Arabic
+      return "ar";
+    } else if (languageCode.equals("aze")) { // Azeri
+      return "az";
+    } else if (languageCode.equals("eus")) { // Basque
+      return "eu";
+    } else if (languageCode.equals("bel")) { // Belarusian
+      return "be";
+    } else if (languageCode.equals("ben")) { // Bengali
+      return "bn";
+    } else if (languageCode.equals("bul")) { // Bulgarian
+      return "bg";
+    } else if (languageCode.equals("cat")) { // Catalan
+      return "ca";
     } else if (languageCode.equals("chi_sim")) { // Chinese (Simplified)
       return "zh-CN";
     } else if (languageCode.equals("chi_tra")) { // Chinese (Traditional)
@@ -2512,52 +2520,50 @@ class LanguageCodeHelper {
       return "uk";
     } else if (languageCode.equals("vie")) { // Vietnamese
       return "vi";
-	  } else {
-	    return "";
-	  }
-	}
+    } else {
+      return "";
+    }
+  }
 
-	/**
-	 * Map the given ISO 639-3 language code to a name of a language, for example,
-	 * "Spanish"
-	 *
-	 * @param context
-	 *            interface to calling application environment. Needed to access
-	 *            values from strings.xml.
-	 * @param languageCode
-	 *            ISO 639-3 language code
-	 * @return language name
-	 */
-	public static String getOcrLanguageName(Context context, String languageCode) {
-		Resources res = context.getResources();
-		String[] language6393 = res.getStringArray(R.array.iso6393);
-		String[] languageNames = res.getStringArray(R.array.languagenames);
-		int len;
+  /**
+   * Map the given ISO 639-3 language code to a name of a language, for example,
+   * "Spanish"
+   *
+   * @param context
+   *            interface to calling application environment. Needed to access
+   *            values from strings.xml.
+   * @param languageCode
+   *            ISO 639-3 language code
+   * @return language name
+   */
+  public static String getOcrLanguageName(Context context, String languageCode) {
+    Resources res = context.getResources();
+    String[] language6393 = res.getStringArray(R.array.iso6393);
+    String[] languageNames = res.getStringArray(R.array.languagenames);
+    int len;
 
-		// Finds the given language code in the iso6393 array, and takes the name with the same index
-		// from the languagenames array.
-		for (len = 0; len < language6393.length; len++) {
-			if (language6393[len].equals(languageCode)) {
-				Log.d(TAG, "getOcrLanguageName: " + languageCode + "->"
-						+ languageNames[len]);
-				return languageNames[len];
-			}
-		}
+    // Finds the given language code in the iso6393 array, and takes the name with the same index
+    // from the languagenames array.
+    for (len = 0; len < language6393.length; len++) {
+      if (language6393[len].equals(languageCode)) {
+        Log.d(TAG, "getOcrLanguageName: " + languageCode + "->" + languageNames[len]);
+        return languageNames[len];
+      }
+    }
 
-		Log.d(TAG, "languageCode: Could not find language name for ISO 693-3: "
-				+ languageCode);
-		return languageCode;
-	}
+    Log.d(TAG, "languageCode: Could not find language name for ISO 693-3: " + languageCode);
+    return languageCode;
+  }
 
-	/**
+  /**
    * Map the given ISO 639-1 language code to a name of a language, for example,
    * "Spanish"
-	 *
-	 * @param languageCode
-	 *             ISO 639-1 language code
-	 * @return name of the language. For example, "English"
-	 */
-	public static String getTranslationLanguageName(Context context, String languageCode) {
+   *
+   * @param languageCode
+   *             ISO 639-1 language code
+   * @return name of the language. For example, "English"
+   */
+  public static String getTranslationLanguageName(Context context, String languageCode) {
     Resources res = context.getResources();
     String[] language6391 = res.getStringArray(R.array.translationtargetiso6391_google);
     String[] languageNames = res.getStringArray(R.array.translationtargetlanguagenames_google);
@@ -2584,9 +2590,9 @@ class LanguageCodeHelper {
     }
 
     Log.d(TAG, "getTranslationLanguageName: Could not find language name for ISO 693-1: " +
-            languageCode);
+      languageCode);
     return "";
-	}
+  }
 
 }
 
@@ -2601,7 +2607,7 @@ class LanguageCodeHelper {
  * The code for this class was adapted from the ZXing project: http://code.google.com/p/zxing
  */
 class PreferencesActivity extends PreferenceActivity implements
-  OnSharedPreferenceChangeListener {
+OnSharedPreferenceChangeListener {
 
   // Preference keys not carried over from ZXing project
   public static final String KEY_SOURCE_LANGUAGE_PREFERENCE = "sourceLanguageCodeOcrPref";
@@ -2643,7 +2649,8 @@ class PreferencesActivity extends PreferenceActivity implements
    *            savedInstanceState the current Activity's state, as passed by
    *            Android
    */
-  @Override
+  @
+  Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     addPreferencesFromResource(R.xml.preferences);
@@ -2673,13 +2680,14 @@ class PreferencesActivity extends PreferenceActivity implements
    * @param key
    *            the key of the preference that was changed, added, or removed
    */
-  @Override
+  @
+  Override
   public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
-      String key) {
+    String key) {
     // Update preference summary values to show current preferences
     if (key.equals(KEY_TRANSLATOR)) {
       listPreferenceTranslator.setSummary(sharedPreferences.getString(key, CaptureActivity.DEFAULT_TRANSLATOR));
-    } else if(key.equals(KEY_SOURCE_LANGUAGE_PREFERENCE)) {
+    } else if (key.equals(KEY_SOURCE_LANGUAGE_PREFERENCE)) {
 
       // Set the summary text for the source language name
       listPreferenceSourceLanguage.setSummary(LanguageCodeHelper.getOcrLanguageName(getBaseContext(), sharedPreferences.getString(key, CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE)));
@@ -2706,8 +2714,8 @@ class PreferencesActivity extends PreferenceActivity implements
 
       // Save a separate, language-specific character blacklist for this language
       OcrCharacterHelper.setBlacklist(sharedPreferences,
-          listPreferenceSourceLanguage.getValue(),
-          sharedPreferences.getString(key, OcrCharacterHelper.getDefaultBlacklist(listPreferenceSourceLanguage.getValue())));
+        listPreferenceSourceLanguage.getValue(),
+        sharedPreferences.getString(key, OcrCharacterHelper.getDefaultBlacklist(listPreferenceSourceLanguage.getValue())));
 
       // Set the summary text
       editTextPreferenceCharacterBlacklist.setSummary(sharedPreferences.getString(key, OcrCharacterHelper.getDefaultBlacklist(listPreferenceSourceLanguage.getValue())));
@@ -2716,8 +2724,8 @@ class PreferencesActivity extends PreferenceActivity implements
 
       // Save a separate, language-specific character blacklist for this language
       OcrCharacterHelper.setWhitelist(sharedPreferences,
-          listPreferenceSourceLanguage.getValue(),
-          sharedPreferences.getString(key, OcrCharacterHelper.getDefaultWhitelist(listPreferenceSourceLanguage.getValue())));
+        listPreferenceSourceLanguage.getValue(),
+        sharedPreferences.getString(key, OcrCharacterHelper.getDefaultWhitelist(listPreferenceSourceLanguage.getValue())));
 
       // Set the summary text
       editTextPreferenceCharacterWhitelist.setSummary(sharedPreferences.getString(key, OcrCharacterHelper.getDefaultWhitelist(listPreferenceSourceLanguage.getValue())));
@@ -2739,27 +2747,27 @@ class PreferencesActivity extends PreferenceActivity implements
     // Set the preference for the target language code, in case we've just switched from Google
     // to Bing, or Bing to Google.
     String currentLanguageCode = sharedPreferences.getString(KEY_TARGET_LANGUAGE_PREFERENCE,
-        CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE);
+      CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE);
 
     // Get the name of our language
     String currentLanguage = LanguageCodeHelper.getTranslationLanguageName(getBaseContext(),
-        currentLanguageCode);
+      currentLanguageCode);
     String[] translators = getResources().getStringArray(R.array.translators);
     String translator = sharedPreferences.getString(KEY_TRANSLATOR, CaptureActivity.DEFAULT_TRANSLATOR);
     String newLanguageCode = "";
-      // Update the list of available languages for the currently-chosen translation API.
-      listPreferenceTargetLanguage.setEntries(R.array.translationtargetlanguagenames_microsoft);
-      listPreferenceTargetLanguage.setEntryValues(R.array.translationtargetiso6391_microsoft);
+    // Update the list of available languages for the currently-chosen translation API.
+    listPreferenceTargetLanguage.setEntries(R.array.translationtargetlanguagenames_microsoft);
+    listPreferenceTargetLanguage.setEntryValues(R.array.translationtargetiso6391_microsoft);
 
-      // Get the corresponding code for our language name
-      newLanguageCode = TranslatorBing.toLanguage(currentLanguage);
+    // Get the corresponding code for our language name
+    newLanguageCode = TranslatorBing.toLanguage(currentLanguage);
 
     // Store the code as the target language preference
     String newLanguageName = LanguageCodeHelper.getTranslationLanguageName(getBaseContext(),
-        newLanguageCode);
+      newLanguageCode);
     listPreferenceTargetLanguage.setValue(newLanguageName); // Set the radio button in the list
     sharedPreferences.edit().putString(PreferencesActivity.KEY_TARGET_LANGUAGE_PREFERENCE,
-        newLanguageCode).commit();
+      newLanguageCode).commit();
     listPreferenceTargetLanguage.setSummary(newLanguageName);
   }
 
@@ -2767,7 +2775,8 @@ class PreferencesActivity extends PreferenceActivity implements
    * Sets up initial preference summary text
    * values and registers the OnSharedPreferenceChangeListener.
    */
-  @Override
+  @
+  Override
   protected void onResume() {
     super.onResume();
     // Set up the initial summary values
@@ -2787,7 +2796,8 @@ class PreferencesActivity extends PreferenceActivity implements
    * Called when Activity is about to lose focus. Unregisters the
    * OnSharedPreferenceChangeListener.
    */
-  @Override
+  @
+  Override
   protected void onPause() {
     super.onPause();
     getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
@@ -2816,11 +2826,11 @@ class Translator {
 
     // Delegate the translation based on the user's preference.
 
-      // Get the correct code for the source language for this translation service.
-      sourceLanguageCode = TranslatorBing.toLanguage(
-          LanguageCodeHelper.getTranslationLanguageName(activity.getBaseContext(), sourceLanguageCode));
+    // Get the correct code for the source language for this translation service.
+    sourceLanguageCode = TranslatorBing.toLanguage(
+      LanguageCodeHelper.getTranslationLanguageName(activity.getBaseContext(), sourceLanguageCode));
 
-      return TranslatorBing.translate(sourceLanguageCode, targetLanguageCode, sourceText);
+    return TranslatorBing.translate(sourceLanguageCode, targetLanguageCode, sourceText);
   }
 }
 
@@ -2845,7 +2855,7 @@ class TranslatorBing {
     try {
       Log.d(TAG, sourceLanguageCode + " -> " + targetLanguageCode);
       return Translate.execute(sourceText, Language.fromString(sourceLanguageCode),
-          Language.fromString(targetLanguageCode));
+        Language.fromString(targetLanguageCode));
     } catch (Exception e) {
       Log.e(TAG, "Caught exeption in translation request.");
       e.printStackTrace();
@@ -2892,7 +2902,7 @@ class TranslatorBing {
 /**
  * Class to perform translations in the background.
  */
-class TranslateAsyncTask extends AsyncTask<String, String, Boolean> {
+class TranslateAsyncTask extends AsyncTask < String, String, Boolean > {
 
   private static final String TAG = TranslateAsyncTask.class.getSimpleName();
 
@@ -2906,7 +2916,7 @@ class TranslateAsyncTask extends AsyncTask<String, String, Boolean> {
   private String translatedText = "";
 
   public TranslateAsyncTask(CaptureActivity activity, String sourceLanguageCode, String targetLanguageCode,
-      String sourceText) {
+    String sourceText) {
     this.activity = activity;
     this.sourceLanguageCode = sourceLanguageCode;
     this.targetLanguageCode = targetLanguageCode;
@@ -2916,8 +2926,9 @@ class TranslateAsyncTask extends AsyncTask<String, String, Boolean> {
     targetLanguageTextView = (TextView) activity.findViewById(R.id.translation_language_text_view);
   }
 
-  @Override
-  protected Boolean doInBackground(String... arg0) {
+  @
+  Override
+  protected Boolean doInBackground(String...arg0) {
     translatedText = Translator.translate(activity, sourceLanguageCode, targetLanguageCode, sourceText);
 
     // Check for failed translations.
@@ -2928,7 +2939,8 @@ class TranslateAsyncTask extends AsyncTask<String, String, Boolean> {
     return true;
   }
 
-  @Override
+  @
+  Override
   protected synchronized void onPostExecute(Boolean result) {
     super.onPostExecute(result);
 
