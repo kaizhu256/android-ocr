@@ -278,81 +278,6 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
 
       cameraManager = new CameraManager(getApplication());
       viewfinderView.setCameraManager(cameraManager);
-
-      // Set listener to change the size of the viewfinder rectangle.
-      viewfinderView.setOnTouchListener(new View.OnTouchListener() {
-        int lastX = -1;
-        int lastY = -1;
-
-        @
-        Override
-        public boolean onTouch(View v, MotionEvent event) {
-          switch (event.getAction()) {
-          case MotionEvent.ACTION_DOWN:
-            lastX = -1;
-            lastY = -1;
-            return true;
-          case MotionEvent.ACTION_MOVE:
-            int currentX = (int) event.getX();
-            int currentY = (int) event.getY();
-
-            try {
-              Rect rect = cameraManager.getFramingRect();
-
-              final int BUFFER = 50;
-              final int BIG_BUFFER = 60;
-              if (lastX >= 0) {
-                // Adjust the size of the viewfinder rectangle. Check if the touch event occurs in the corner areas first, because the regions overlap.
-                if (((currentX >= rect.left - BIG_BUFFER && currentX <= rect.left + BIG_BUFFER) || (lastX >= rect.left - BIG_BUFFER && lastX <= rect.left + BIG_BUFFER)) && ((currentY <= rect.top + BIG_BUFFER && currentY >= rect.top - BIG_BUFFER) || (lastY <= rect.top + BIG_BUFFER && lastY >= rect.top - BIG_BUFFER))) {
-                  // Top left corner: adjust both top and left sides
-                  cameraManager.adjustFramingRect(2 * (lastX - currentX), 2 * (lastY - currentY));
-                  viewfinderView.removeResultText();
-                } else if (((currentX >= rect.right - BIG_BUFFER && currentX <= rect.right + BIG_BUFFER) || (lastX >= rect.right - BIG_BUFFER && lastX <= rect.right + BIG_BUFFER)) && ((currentY <= rect.top + BIG_BUFFER && currentY >= rect.top - BIG_BUFFER) || (lastY <= rect.top + BIG_BUFFER && lastY >= rect.top - BIG_BUFFER))) {
-                  // Top right corner: adjust both top and right sides
-                  cameraManager.adjustFramingRect(2 * (currentX - lastX), 2 * (lastY - currentY));
-                  viewfinderView.removeResultText();
-                } else if (((currentX >= rect.left - BIG_BUFFER && currentX <= rect.left + BIG_BUFFER) || (lastX >= rect.left - BIG_BUFFER && lastX <= rect.left + BIG_BUFFER)) && ((currentY <= rect.bottom + BIG_BUFFER && currentY >= rect.bottom - BIG_BUFFER) || (lastY <= rect.bottom + BIG_BUFFER && lastY >= rect.bottom - BIG_BUFFER))) {
-                  // Bottom left corner: adjust both bottom and left sides
-                  cameraManager.adjustFramingRect(2 * (lastX - currentX), 2 * (currentY - lastY));
-                  viewfinderView.removeResultText();
-                } else if (((currentX >= rect.right - BIG_BUFFER && currentX <= rect.right + BIG_BUFFER) || (lastX >= rect.right - BIG_BUFFER && lastX <= rect.right + BIG_BUFFER)) && ((currentY <= rect.bottom + BIG_BUFFER && currentY >= rect.bottom - BIG_BUFFER) || (lastY <= rect.bottom + BIG_BUFFER && lastY >= rect.bottom - BIG_BUFFER))) {
-                  // Bottom right corner: adjust both bottom and right sides
-                  cameraManager.adjustFramingRect(2 * (currentX - lastX), 2 * (currentY - lastY));
-                  viewfinderView.removeResultText();
-                } else if (((currentX >= rect.left - BUFFER && currentX <= rect.left + BUFFER) || (lastX >= rect.left - BUFFER && lastX <= rect.left + BUFFER)) && ((currentY <= rect.bottom && currentY >= rect.top) || (lastY <= rect.bottom && lastY >= rect.top))) {
-                  // Adjusting left side: event falls within BUFFER pixels of left side, and between top and bottom side limits
-                  cameraManager.adjustFramingRect(2 * (lastX - currentX), 0);
-                  viewfinderView.removeResultText();
-                } else if (((currentX >= rect.right - BUFFER && currentX <= rect.right + BUFFER) || (lastX >= rect.right - BUFFER && lastX <= rect.right + BUFFER)) && ((currentY <= rect.bottom && currentY >= rect.top) || (lastY <= rect.bottom && lastY >= rect.top))) {
-                  // Adjusting right side: event falls within BUFFER pixels of right side, and between top and bottom side limits
-                  cameraManager.adjustFramingRect(2 * (currentX - lastX), 0);
-                  viewfinderView.removeResultText();
-                } else if (((currentY <= rect.top + BUFFER && currentY >= rect.top - BUFFER) || (lastY <= rect.top + BUFFER && lastY >= rect.top - BUFFER)) && ((currentX <= rect.right && currentX >= rect.left) || (lastX <= rect.right && lastX >= rect.left))) {
-                  // Adjusting top side: event falls within BUFFER pixels of top side, and between left and right side limits
-                  cameraManager.adjustFramingRect(0, 2 * (lastY - currentY));
-                  viewfinderView.removeResultText();
-                } else if (((currentY <= rect.bottom + BUFFER && currentY >= rect.bottom - BUFFER) || (lastY <= rect.bottom + BUFFER && lastY >= rect.bottom - BUFFER)) && ((currentX <= rect.right && currentX >= rect.left) || (lastX <= rect.right && lastX >= rect.left))) {
-                  // Adjusting bottom side: event falls within BUFFER pixels of bottom side, and between left and right side limits
-                  cameraManager.adjustFramingRect(0, 2 * (currentY - lastY));
-                  viewfinderView.removeResultText();
-                }
-              }
-            } catch (NullPointerException e) {
-              Log.e(TAG, "Framing rect not available", e);
-            }
-            v.invalidate();
-            lastX = currentX;
-            lastY = currentY;
-            return true;
-          case MotionEvent.ACTION_UP:
-            lastX = -1;
-            lastY = -1;
-            return true;
-          }
-          return false;
-        }
-      });
-
       isEngineReady = false;
     }
 
@@ -453,34 +378,18 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
     @
     Override
     public void surfaceCreated(SurfaceHolder holder) {
-      Log.d(TAG, "surfaceCreated()");
-
-      if (holder == null) {
-        Log.e(TAG, "surfaceCreated gave us a null surface");
-      }
-
-      // Only initialize the camera if the OCR engine is ready to go.
-      if (!hasSurface && isEngineReady) {
-        Log.d(TAG, "surfaceCreated(): calling initCamera()...");
-        initCamera(holder);
-      }
+      initCamera(holder);
       hasSurface = true;
     }
 
     /** Initializes the camera and starts the handler to begin previewing. */
     private void initCamera(SurfaceHolder surfaceHolder) {
       Log.d(TAG, "initCamera()");
-      if (surfaceHolder == null) {
-        throw new IllegalStateException("No SurfaceHolder provided");
-      }
       try {
-
         // Open and initialize the camera
         cameraManager.openDriver(surfaceHolder);
-
         // Creating the handler starts the preview, which can also throw a RuntimeException.
         handler = new CaptureActivityHandler(this, cameraManager, isContinuousModeActive);
-
       } catch (IOException ioe) {
         showErrorMessage("Error", "Could not initialize camera. Please try restarting device.");
       } catch (RuntimeException e) {
@@ -1893,11 +1802,6 @@ class CameraManager {
     if (!initialized) {
       initialized = true;
       configManager.initFromCameraParameters(theCamera);
-      if (requestedFramingRectWidth > 0 && requestedFramingRectHeight > 0) {
-        adjustFramingRect(requestedFramingRectWidth, requestedFramingRectHeight);
-        requestedFramingRectWidth = 0;
-        requestedFramingRectHeight = 0;
-      }
     }
     configManager.setDesiredCameraParameters(theCamera);
 
@@ -1980,7 +1884,7 @@ class CameraManager {
    */
   public synchronized Rect getFramingRect() {
     if (framingRect == null) {
-      framingRect = new Rect(0, 0, 640, 128);
+      framingRect = new Rect(160, 90, 480, 270);
     }
     return framingRect;
   }
@@ -2005,36 +1909,6 @@ class CameraManager {
       framingRectInPreview = rect;
     }
     return framingRectInPreview;
-  }
-
-  /**
-   * Changes the size of the framing rect.
-   *
-   * @param deltaWidth Number of pixels to adjust the width
-   * @param deltaHeight Number of pixels to adjust the height
-   */
-  public synchronized void adjustFramingRect(int deltaWidth, int deltaHeight) {
-    if (initialized) {
-      Point screenResolution = configManager.getScreenResolution();
-
-      // Set maximum and minimum sizes
-      if ((framingRect.width() + deltaWidth > screenResolution.x - 4) || (framingRect.width() + deltaWidth < 50)) {
-        deltaWidth = 0;
-      }
-      if ((framingRect.height() + deltaHeight > screenResolution.y - 4) || (framingRect.height() + deltaHeight < 50)) {
-        deltaHeight = 0;
-      }
-
-      int newWidth = framingRect.width() + deltaWidth;
-      int newHeight = framingRect.height() + deltaHeight;
-      int leftOffset = (screenResolution.x - newWidth) / 2;
-      int topOffset = (screenResolution.y - newHeight) / 2;
-      framingRect = new Rect(leftOffset, topOffset, leftOffset + newWidth, topOffset + newHeight);
-      framingRectInPreview = null;
-    } else {
-      requestedFramingRectWidth = deltaWidth;
-      requestedFramingRectHeight = deltaHeight;
-    }
   }
 
   /**
