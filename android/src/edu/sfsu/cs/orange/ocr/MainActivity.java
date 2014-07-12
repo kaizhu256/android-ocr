@@ -316,10 +316,6 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
 
       if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
 
-        // We can read and write the media
-        //    	if (Integer.valueOf(android.os.Build.VERSION.SDK_INT) > 7) {
-        // For Android 2.2 and above
-
         try {
           /** Finds the proper location on the SD card where we can save files. */
           initOcrEngine(getExternalFilesDir(Environment.MEDIA_MOUNTED), sourceLanguageCodeOcr, sourceLanguageReadable);
@@ -1776,7 +1772,7 @@ class CameraManager {
         throw new IOException();
       }
       camera = theCamera;
-      camera.setDisplayOrientation(90);
+      //!! camera.setDisplayOrientation(90);
     }
     camera.setPreviewDisplay(holder);
     if (!initialized) {
