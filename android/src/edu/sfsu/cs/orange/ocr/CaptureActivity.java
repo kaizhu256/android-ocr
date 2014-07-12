@@ -1929,14 +1929,6 @@ class CameraConfigurationManager {
     Display display = manager.getDefaultDisplay();
     int width = display.getWidth();
     int height = display.getHeight();
-    // We're landscape-only, and have apparently seen issues with display thinking it's portrait
-    // when waking from sleep. If it's not landscape, assume it's mistaken and reverse them:
-    //!! if (width < height) {
-    //!! Log.i(TAG, "Display reports portrait orientation; assuming this is incorrect");
-    //!! int temp = width;
-    //!! width = height;
-    //!! height = temp;
-    //!! }
     screenResolution = new Point(width, height);
     Log.i(TAG, "Screen resolution: " + screenResolution);
     cameraResolution = findBestPreviewSizeValue(parameters, screenResolution);
@@ -1953,7 +1945,6 @@ class CameraConfigurationManager {
 
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-    initializeTorch(parameters, prefs);
     String focusMode = null;
     if (prefs.getBoolean(PreferencesActivity.KEY_AUTO_FOCUS, true)) {
       if (prefs.getBoolean(PreferencesActivity.KEY_DISABLE_CONTINUOUS_FOCUS, false)) {
@@ -1986,39 +1977,6 @@ class CameraConfigurationManager {
 
   Point getScreenResolution() {
     return screenResolution;
-  }
-
-  void setTorch(Camera camera, boolean newSetting) {
-    Camera.Parameters parameters = camera.getParameters();
-    doSetTorch(parameters, newSetting);
-    camera.setParameters(parameters);
-    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-    boolean currentSetting = prefs.getBoolean(PreferencesActivity.KEY_TOGGLE_LIGHT, false);
-    if (currentSetting != newSetting) {
-      SharedPreferences.Editor editor = prefs.edit();
-      editor.putBoolean(PreferencesActivity.KEY_TOGGLE_LIGHT, newSetting);
-      editor.commit();
-    }
-  }
-
-  private static void initializeTorch(Camera.Parameters parameters, SharedPreferences prefs) {
-    boolean currentSetting = prefs.getBoolean(PreferencesActivity.KEY_TOGGLE_LIGHT, false);
-    doSetTorch(parameters, currentSetting);
-  }
-
-  private static void doSetTorch(Camera.Parameters parameters, boolean newSetting) {
-    String flashMode;
-    if (newSetting) {
-      flashMode = findSettableValue(parameters.getSupportedFlashModes(),
-        Camera.Parameters.FLASH_MODE_TORCH,
-        Camera.Parameters.FLASH_MODE_ON);
-    } else {
-      flashMode = findSettableValue(parameters.getSupportedFlashModes(),
-        Camera.Parameters.FLASH_MODE_OFF);
-    }
-    if (flashMode != null) {
-      parameters.setFlashMode(flashMode);
-    }
   }
 
   private Point findBestPreviewSizeValue(Camera.Parameters parameters, Point screenResolution) {
@@ -2060,7 +2018,6 @@ class CameraConfigurationManager {
       if (pixels < MIN_PREVIEW_PIXELS || pixels > MAX_PREVIEW_PIXELS) {
         continue;
       }
-      boolean isCandidatePortrait = realWidth < realHeight;
       Point exactPoint = new Point(realWidth, realHeight);
       Log.i(TAG, "Found preview size exactly matching screen size: " + exactPoint);
       return exactPoint;
@@ -2191,6 +2148,7 @@ class CameraManager {
         throw new IOException();
       }
       camera = theCamera;
+      camera.setDisplayOrientation(90);
     }
     camera.setPreviewDisplay(holder);
     if (!initialized) {
