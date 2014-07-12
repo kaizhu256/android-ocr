@@ -251,7 +251,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       // window feature, be sure to request this before
       // setContentView() is called
       getWindow().requestFeature(WindowUtils.FEATURE_VOICE_COMMANDS);
-      setContentView(R.layout.capture);
+      setContentView(R.layout.activity_main);
       viewfinderView = (ViewfinderView) findViewById(R.id.viewfinder_view);
       cameraButtonView = findViewById(R.id.camera_button_view);
       resultView = findViewById(R.id.result_view);
