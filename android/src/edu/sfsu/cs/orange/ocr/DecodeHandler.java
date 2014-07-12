@@ -17,7 +17,6 @@
 
 package edu.sfsu.cs.orange.ocr;
 
-import edu.sfsu.cs.orange.ocr.BeepManager;
 
 import com.googlecode.leptonica.android.ReadFile;
 import com.googlecode.tesseract.android.TessBaseAPI;
@@ -33,7 +32,7 @@ import android.util.Log;
 
 /**
  * Class to send bitmap data for OCR.
- * 
+ *
  * The code for this class was adapted from the ZXing project: http://code.google.com/p/zxing/
  */
 final class DecodeHandler extends Handler {
@@ -41,7 +40,6 @@ final class DecodeHandler extends Handler {
   private final CaptureActivity activity;
   private boolean running = true;
   private final TessBaseAPI baseApi;
-  private BeepManager beepManager;
   private Bitmap bitmap;
   private static boolean isDecodePending;
   private long timeRequired;
@@ -49,8 +47,6 @@ final class DecodeHandler extends Handler {
   DecodeHandler(CaptureActivity activity) {
     this.activity = activity;
     baseApi = activity.getBaseApi();
-    beepManager = new BeepManager(activity);
-    beepManager.updatePrefs();
   }
 
   @Override
@@ -78,27 +74,26 @@ final class DecodeHandler extends Handler {
 
   /**
    *  Launch an AsyncTask to perform an OCR decode for single-shot mode.
-   *  
+   *
    * @param data Image data
    * @param width Image width
    * @param height Image height
    */
   private void ocrDecode(byte[] data, int width, int height) {
-    beepManager.playBeepSoundAndVibrate();
     activity.displayProgressDialog();
-    
+
     // Launch OCR asynchronously, so we get the dialog box displayed immediately
     new OcrRecognizeAsyncTask(activity, baseApi, data, width, height).execute();
   }
 
   /**
    *  Perform an OCR decode for realtime recognition mode.
-   *  
+   *
    * @param data Image data
    * @param width Image width
    * @param height Image height
    */
-  private void ocrContinuousDecode(byte[] data, int width, int height) {   
+  private void ocrContinuousDecode(byte[] data, int width, int height) {
     PlanarYUVLuminanceSource source = activity.getCameraManager().buildLuminanceSource(data, width, height);
     if (source == null) {
       sendContinuousOcrFailMessage();
@@ -140,7 +135,7 @@ final class DecodeHandler extends Handler {
     String textResult;
     long start = System.currentTimeMillis();
 
-    try {     
+    try {
       baseApi.setImage(ReadFile.readBitmap(bitmap));
       textResult = baseApi.getUTF8Text();
       timeRequired = System.currentTimeMillis() - start;
@@ -161,12 +156,12 @@ final class DecodeHandler extends Handler {
       if (ViewfinderView.DRAW_STRIP_BOXES) {
         ocrResult.setStripBoundingBoxes(baseApi.getStrips().getBoxRects());
       }
-      
+
       // Always get the word bounding boxes--we want it for annotating the bitmap after the user
       // presses the shutter button, in addition to maybe wanting to draw boxes/words during the
       // continuous mode recognition.
       ocrResult.setWordBoundingBoxes(baseApi.getWords().getBoxRects());
-      
+
 //      if (ViewfinderView.DRAW_CHARACTER_BOXES || ViewfinderView.DRAW_CHARACTER_TEXT) {
 //        ocrResult.setCharacterBoundingBoxes(baseApi.getCharacters().getBoxRects());
 //      }
@@ -187,7 +182,7 @@ final class DecodeHandler extends Handler {
     ocrResult.setRecognitionTimeRequired(timeRequired);
     return ocrResult;
   }
-  
+
   private void sendContinuousOcrFailMessage() {
     Handler handler = activity.getHandler();
     if (handler != null) {
