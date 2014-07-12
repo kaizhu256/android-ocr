@@ -93,21 +93,4 @@ public abstract class LuminanceSource {
   public LuminanceSource crop(int left, int top, int width, int height) {
     throw new RuntimeException("This luminance source does not support cropping.");
   }
-
-  /**
-   * @return Whether this subclass supports counter-clockwise rotation.
-   */
-  public boolean isRotateSupported() {
-    return false;
-  }
-
-  /**
-   * Returns a new object with rotated image data. Only callable if isRotateSupported() is true.
-   *
-   * @return A rotated version of this object.
-   */
-  public LuminanceSource rotateCounterClockwise() {
-    throw new RuntimeException("This luminance source does not support rotation.");
-  }
-
 }

@@ -199,19 +199,9 @@ final class CameraConfigurationManager {
         continue;
       }
       boolean isCandidatePortrait = realWidth < realHeight;
-      int maybeFlippedWidth = isCandidatePortrait ? realHeight : realWidth;
-      int maybeFlippedHeight = isCandidatePortrait ? realWidth : realHeight;
-      if (maybeFlippedWidth == screenResolution.x && maybeFlippedHeight == screenResolution.y) {
         Point exactPoint = new Point(realWidth, realHeight);
         Log.i(TAG, "Found preview size exactly matching screen size: " + exactPoint);
         return exactPoint;
-      }
-      float aspectRatio = (float) maybeFlippedWidth / (float) maybeFlippedHeight;
-      float newDiff = Math.abs(aspectRatio - screenAspectRatio);
-      if (newDiff < diff) {
-        bestSize = new Point(realWidth, realHeight);
-        diff = newDiff;
-      }
     }
 
     if (bestSize == null) {
