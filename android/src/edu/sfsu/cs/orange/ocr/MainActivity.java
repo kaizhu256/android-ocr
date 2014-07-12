@@ -210,7 +210,6 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
     private String characterBlacklist;
     private String characterWhitelist;
     private ShutterButton shutterButton;
-    private boolean isTranslationActive; // Whether we want to show translations
     private boolean isContinuousModeActive; // Whether we are doing OCR in continuous mode
     private SharedPreferences prefs;
     private OnSharedPreferenceChangeListener listener;
@@ -779,7 +778,6 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
       TextView translationLanguageLabelTextView = (TextView) findViewById(R.id.translation_language_label_text_view);
       TextView translationLanguageTextView = (TextView) findViewById(R.id.translation_language_text_view);
       TextView translationTextView = (TextView) findViewById(R.id.translation_text_view);
-      if (isTranslationActive) {
         // Handle translation text fields
         translationLanguageLabelTextView.setVisibility(View.VISIBLE);
         translationLanguageTextView.setText(targetLanguageReadable);
@@ -794,13 +792,6 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
         // Get the translation asynchronously
         new TranslateAsyncTask(this, sourceLanguageCodeTranslation, targetLanguageCodeTranslation,
           ocrResult.getText()).execute();
-      } else {
-        translationLanguageLabelTextView.setVisibility(View.GONE);
-        translationLanguageTextView.setVisibility(View.GONE);
-        translationTextView.setVisibility(View.GONE);
-        progressView.setVisibility(View.GONE);
-        setProgressBarVisibility(false);
-      }
       return true;
     }
 
@@ -1099,7 +1090,6 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
       PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
       setSourceLanguage(prefs.getString(PreferencesActivity.KEY_SOURCE_LANGUAGE_PREFERENCE, MainActivity.DEFAULT_SOURCE_LANGUAGE_CODE));
       setTargetLanguage(prefs.getString(PreferencesActivity.KEY_TARGET_LANGUAGE_PREFERENCE, MainActivity.DEFAULT_TARGET_LANGUAGE_CODE));
-      isTranslationActive = prefs.getBoolean(PreferencesActivity.KEY_TOGGLE_TRANSLATION, false);
 
       // Retrieve from preferences, and set in this Activity, the capture mode preference
       if (prefs.getBoolean(PreferencesActivity.KEY_CONTINUOUS_PREVIEW, MainActivity.DEFAULT_TOGGLE_CONTINUOUS)) {
@@ -1859,11 +1849,6 @@ final class PreviewCallback implements Camera.PreviewCallback {
 class CameraManager {
 
   private static final String TAG = CameraManager.class.getSimpleName();
-
-  private static final int MIN_FRAME_WIDTH = 640; // originally 240
-  private static final int MIN_FRAME_HEIGHT = 360; // originally 240
-  private static final int MAX_FRAME_WIDTH = 640; // originally 480
-  private static final int MAX_FRAME_HEIGHT = 360; // originally 360
 
   private final Context context;
   private final CameraConfigurationManager configManager;
