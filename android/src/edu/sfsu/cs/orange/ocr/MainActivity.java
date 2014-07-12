@@ -307,9 +307,45 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
         ocrEngineMode != previousOcrEngineMode;
       if (doNewInit) {
         // Initialize the OCR engine
-        File storageDirectory = getStorageDirectory();
-        if (storageDirectory != null) {
-          initOcrEngine(storageDirectory, sourceLanguageCodeOcr, sourceLanguageReadable);
+
+
+
+
+
+      //Log.d(TAG, "getStorageDirectory(): API level is " + Integer.valueOf(android.os.Build.VERSION.SDK_INT));
+
+      String state = null;
+      try {
+        state = Environment.getExternalStorageState();
+      } catch (RuntimeException e) {
+        Log.e(TAG, "Is the SD card visible?", e);
+        showErrorMessage("Error", "Required external storage (such as an SD card) is unavailable.");
+      }
+
+      if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+
+        // We can read and write the media
+        //    	if (Integer.valueOf(android.os.Build.VERSION.SDK_INT) > 7) {
+        // For Android 2.2 and above
+
+        try {
+          /** Finds the proper location on the SD card where we can save files. */
+          initOcrEngine(getExternalFilesDir(Environment.MEDIA_MOUNTED), sourceLanguageCodeOcr, sourceLanguageReadable);
+          } catch (NullPointerException e) {
+            // We get an error here if the SD card is visible, but full
+            Log.e(TAG, "External storage is unavailable");
+            showErrorMessage("Error", "Required external storage (such as an SD card) is full or unavailable.");
+          }
+
+        } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+          // We can only read the media
+          Log.e(TAG, "External storage is read-only");
+          showErrorMessage("Error", "Required external storage (such as an SD card) is unavailable for data storage.");
+        } else {
+          // Something else is wrong. It may be one of many other states, but all we need
+          // to know is we can neither read nor write
+          Log.e(TAG, "External storage is unavailable");
+          showErrorMessage("Error", "Required external storage (such as an SD card) is unavailable or corrupted.");
         }
       } else {
         // We already have the engine initialized, so just start the camera.
@@ -519,53 +555,6 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
       targetLanguageCodeTranslation = languageCode;
       targetLanguageReadable = LanguageCodeHelper.getTranslationLanguageName(this, languageCode);
       return true;
-    }
-
-    /** Finds the proper location on the SD card where we can save files. */
-    private File getStorageDirectory() {
-      //Log.d(TAG, "getStorageDirectory(): API level is " + Integer.valueOf(android.os.Build.VERSION.SDK_INT));
-
-      String state = null;
-      try {
-        state = Environment.getExternalStorageState();
-      } catch (RuntimeException e) {
-        Log.e(TAG, "Is the SD card visible?", e);
-        showErrorMessage("Error", "Required external storage (such as an SD card) is unavailable.");
-      }
-
-      if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-
-        // We can read and write the media
-        //    	if (Integer.valueOf(android.os.Build.VERSION.SDK_INT) > 7) {
-        // For Android 2.2 and above
-
-        try {
-          return getExternalFilesDir(Environment.MEDIA_MOUNTED);
-        } catch (NullPointerException e) {
-          // We get an error here if the SD card is visible, but full
-          Log.e(TAG, "External storage is unavailable");
-          showErrorMessage("Error", "Required external storage (such as an SD card) is full or unavailable.");
-        }
-
-        //        } else {
-        //          // For Android 2.1 and below, explicitly give the path as, for example,
-        //          // "/mnt/sdcard/Android/data/edu.sfsu.cs.orange.ocr/files/"
-        //          return new File(Environment.getExternalStorageDirectory().toString() + File.separator +
-        //                  "Android" + File.separator + "data" + File.separator + getPackageName() +
-        //                  File.separator + "files" + File.separator);
-        //        }
-
-      } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-        // We can only read the media
-        Log.e(TAG, "External storage is read-only");
-        showErrorMessage("Error", "Required external storage (such as an SD card) is unavailable for data storage.");
-      } else {
-        // Something else is wrong. It may be one of many other states, but all we need
-        // to know is we can neither read nor write
-        Log.e(TAG, "External storage is unavailable");
-        showErrorMessage("Error", "Required external storage (such as an SD card) is unavailable or corrupted.");
-      }
-      return null;
     }
 
     /**
@@ -1764,7 +1753,6 @@ class CameraManager {
   private Camera camera;
   private AutoFocusManager autoFocusManager;
   private Rect framingRect;
-  private Rect framingRectInPreview;
   private boolean initialized;
   private boolean previewing;
   private boolean reverseImage;
@@ -1816,11 +1804,9 @@ class CameraManager {
     if (camera != null) {
       camera.release();
       camera = null;
-
       // Make sure to clear these each time we close the camera, so that any scanning rect
       // requested by intent is forgotten.
       framingRect = null;
-      framingRectInPreview = null;
     }
   }
 
@@ -1894,21 +1880,10 @@ class CameraManager {
    * not UI / screen.
    */
   public synchronized Rect getFramingRectInPreview() {
-    if (framingRectInPreview == null) {
-      Rect rect = new Rect(getFramingRect());
-      Point cameraResolution = configManager.getCameraResolution();
-      Point screenResolution = configManager.getScreenResolution();
-      if (cameraResolution == null || screenResolution == null) {
-        // Called early, before init even finished
-        return null;
-      }
-      rect.left = rect.left * cameraResolution.x / screenResolution.x;
-      rect.right = rect.right * cameraResolution.x / screenResolution.x;
-      rect.top = rect.top * cameraResolution.y / screenResolution.y;
-      rect.bottom = rect.bottom * cameraResolution.y / screenResolution.y;
-      framingRectInPreview = rect;
+    if (framingRect == null) {
+      framingRect = new Rect(160, 90, 480, 270);
     }
-    return framingRectInPreview;
+    return framingRect;
   }
 
   /**
