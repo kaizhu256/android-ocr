@@ -1995,29 +1995,7 @@ class CameraManager {
    */
   public synchronized Rect getFramingRect() {
     if (framingRect == null) {
-      if (camera == null) {
-        return null;
-      }
-      Point screenResolution = configManager.getScreenResolution();
-      if (screenResolution == null) {
-        // Called early, before init even finished
-        return null;
-      }
-      int width = screenResolution.x * 3 / 5;
-      if (width < MIN_FRAME_WIDTH) {
-        width = MIN_FRAME_WIDTH;
-      } else if (width > MAX_FRAME_WIDTH) {
-        width = MAX_FRAME_WIDTH;
-      }
-      int height = screenResolution.y * 1 / 5;
-      if (height < MIN_FRAME_HEIGHT) {
-        height = MIN_FRAME_HEIGHT;
-      } else if (height > MAX_FRAME_HEIGHT) {
-        height = MAX_FRAME_HEIGHT;
-      }
-      int leftOffset = (screenResolution.x - width) / 2;
-      int topOffset = (screenResolution.y - height) / 2;
-      framingRect = new Rect(leftOffset, topOffset, leftOffset + width, topOffset + height);
+      framingRect = new Rect(0, 0, 640, 128);
     }
     return framingRect;
   }
