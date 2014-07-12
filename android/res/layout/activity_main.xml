@@ -1,33 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <FrameLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="fill_parent"
-  android:layout_height="fill_parent"
+  android:layout_width="640px"
+  android:layout_height="360px"
   >
   <SurfaceView
     android:id="@+id/preview_view"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:layout_centerInParent="true"
   />
   <edu.sfsu.cs.orange.ocr.ViewfinderView
     android:id="@+id/viewfinder_view"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:background="#0000"
   />
   <LinearLayout
     android:id="@+id/result_view"
     android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:background="@color/result_view"
     android:visibility="gone"
     android:padding="4dip"
     >
     <LinearLayout
       android:orientation="horizontal"
-      android:layout_width="fill_parent"
+      android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:layout_weight="1"
       android:gravity="center"
@@ -36,7 +36,7 @@
       <LinearLayout
         android:orientation="vertical"
         android:layout_width="wrap_content"
-        android:layout_height="fill_parent"
+        android:layout_height="match_parent"
         android:gravity="right|center_vertical"
         >
         <ImageView
@@ -147,8 +147,8 @@
   </LinearLayout>
   <RelativeLayout
     android:id="@+id/camera_button_view"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     >
     <TextView android:id="@+id/status_view_top"
       android:layout_width="wrap_content"

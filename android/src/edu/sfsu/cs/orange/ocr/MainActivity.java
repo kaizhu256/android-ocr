@@ -1860,10 +1860,10 @@ class CameraManager {
 
   private static final String TAG = CameraManager.class.getSimpleName();
 
-  private static final int MIN_FRAME_WIDTH = 50; // originally 240
-  private static final int MIN_FRAME_HEIGHT = 20; // originally 240
-  private static final int MAX_FRAME_WIDTH = 800; // originally 480
-  private static final int MAX_FRAME_HEIGHT = 600; // originally 360
+  private static final int MIN_FRAME_WIDTH = 640; // originally 240
+  private static final int MIN_FRAME_HEIGHT = 360; // originally 240
+  private static final int MAX_FRAME_WIDTH = 640; // originally 480
+  private static final int MAX_FRAME_HEIGHT = 360; // originally 360
 
   private final Context context;
   private final CameraConfigurationManager configManager;
@@ -1902,7 +1902,7 @@ class CameraManager {
         throw new IOException();
       }
       camera = theCamera;
-      //!! camera.setDisplayOrientation(90);
+      camera.setDisplayOrientation(90);
     }
     camera.setPreviewDisplay(holder);
     if (!initialized) {
