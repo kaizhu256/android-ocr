@@ -58,22 +58,18 @@ final class DecodeHandler extends Handler {
     if (!running) {
       return;
     }
-    switch (message.what) {        
-    case R.id.ocr_continuous_decode:
-      // Only request a decode if a request is not already pending.
-      if (!isDecodePending) {
-        isDecodePending = true;
-        ocrContinuousDecode((byte[]) message.obj, message.arg1, message.arg2);
-      }
-      break;
-    case R.id.ocr_decode:
-      ocrDecode((byte[]) message.obj, message.arg1, message.arg2);
-      break;
-    case R.id.quit:
-      running = false;
-      Looper.myLooper().quit();
-      break;
-    }
+    if (message.what == R.id.ocr_continuous_decode) {
+		// Only request a decode if a request is not already pending.
+		  if (!isDecodePending) {
+		    isDecodePending = true;
+		    ocrContinuousDecode((byte[]) message.obj, message.arg1, message.arg2);
+		  }
+	} else if (message.what == R.id.ocr_decode) {
+		ocrDecode((byte[]) message.obj, message.arg1, message.arg2);
+	} else if (message.what == R.id.quit) {
+		running = false;
+		Looper.myLooper().quit();
+	}
   }
 
   static void resetDecodeState() {
