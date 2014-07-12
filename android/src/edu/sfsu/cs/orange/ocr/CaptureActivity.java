@@ -110,9 +110,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     /** ISO 639-1 language code indicating the default target language for translation. */
     public static final String DEFAULT_TARGET_LANGUAGE_CODE = "zh-CHT";
 
-    /** The default online machine translation service to use. */
-    public static final String DEFAULT_TRANSLATOR = "Google Translate";
-
     /** The default OCR engine to use. */
     public static final String DEFAULT_OCR_ENGINE_MODE = "Tesseract";
 
@@ -1166,9 +1163,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
       // Translation target language
       prefs.edit().putString(PreferencesActivity.KEY_TARGET_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE).commit();
-
-      // Translator
-      prefs.edit().putString(PreferencesActivity.KEY_TRANSLATOR, CaptureActivity.DEFAULT_TRANSLATOR).commit();
 
       // OCR Engine
       prefs.edit().putString(PreferencesActivity.KEY_OCR_ENGINE_MODE, CaptureActivity.DEFAULT_OCR_ENGINE_MODE).commit();
@@ -2636,7 +2630,6 @@ OnSharedPreferenceChangeListener {
     String key) {
     // Update preference summary values to show current preferences
     if (key.equals(KEY_TRANSLATOR)) {
-      listPreferenceTranslator.setSummary(sharedPreferences.getString(key, CaptureActivity.DEFAULT_TRANSLATOR));
     } else if (key.equals(KEY_SOURCE_LANGUAGE_PREFERENCE)) {
 
       // Set the summary text for the source language name
@@ -2693,7 +2686,6 @@ OnSharedPreferenceChangeListener {
   protected void onResume() {
     super.onResume();
     // Set up the initial summary values
-    listPreferenceTranslator.setSummary(sharedPreferences.getString(KEY_TRANSLATOR, CaptureActivity.DEFAULT_TRANSLATOR));
     listPreferenceSourceLanguage.setSummary(LanguageCodeHelper.getOcrLanguageName(getBaseContext(), sharedPreferences.getString(KEY_SOURCE_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE)));
     listPreferenceTargetLanguage.setSummary(LanguageCodeHelper.getTranslationLanguageName(getBaseContext(), sharedPreferences.getString(KEY_TARGET_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE)));
     listPreferencePageSegmentationMode.setSummary(sharedPreferences.getString(KEY_PAGE_SEGMENTATION_MODE, CaptureActivity.DEFAULT_PAGE_SEGMENTATION_MODE));
@@ -2714,70 +2706,6 @@ OnSharedPreferenceChangeListener {
   protected void onPause() {
     super.onPause();
     getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
-  }
-}
-
-
-
-
-/**
- * Delegates translation requests to the appropriate translation service.
- */
-class Translator {
-  public static final String BAD_TRANSLATION_MSG = "[Translation unavailable]";
-  private static final String TAG = "Translator";
-
-  /**
-   *  Translate using Microsoft Translate API
-   * @param sourceLanguageCode Source language code, for example, "en"
-   * @param targetLanguageCode Target language code, for example, "es"
-   * @param sourceText Text to send for translation
-   * @return Translated text
-   */
-  static String translate(String sourceLanguageCode, String targetLanguageCode, String sourceText) {
-    Translate.setClientId("davidbranniganz-translate");
-    Translate.setClientSecret("HxwO7LY6xkLB5EU9jWcR1MJWE0dI1AwMPTVBp13l+ek=");
-    try {
-      Log.d(TAG, sourceLanguageCode + " -> " + targetLanguageCode);
-      return Translate.execute(sourceText, Language.fromString(sourceLanguageCode),
-        Language.fromString(targetLanguageCode));
-    } catch (Exception e) {
-      Log.e(TAG, "Caught exeption in translation request.");
-      e.printStackTrace();
-      return Translator.BAD_TRANSLATION_MSG;
-    }
-  }
-
-  /**
-   * Convert the given name of a natural language into a Language from the enum of Languages
-   * supported by this translation service.
-   *
-   * @param languageName The name of the language, for example, "English"
-   * @return code representing this language, for example, "en", for this translation API
-   * @throws IllegalArgumentException
-   */
-  public static String toLanguage(String languageName) throws IllegalArgumentException {
-    // Convert string to all caps
-    String standardizedName = languageName.toUpperCase();
-
-    // Replace spaces with underscores
-    standardizedName = standardizedName.replace(' ', '_');
-
-    // Remove parentheses
-    standardizedName = standardizedName.replace("(", "");
-    standardizedName = standardizedName.replace(")", "");
-
-    // Map Norwegian-Bokmal to Norwegian
-    if (standardizedName.equals("NORWEGIAN_BOKMAL")) {
-      standardizedName = "NORWEGIAN";
-    }
-
-    try {
-      return Language.valueOf(standardizedName).toString();
-    } catch (IllegalArgumentException e) {
-      Log.e(TAG, "Not found--returning default language code");
-      return CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE;
-    }
   }
 }
 
@@ -2814,14 +2742,19 @@ class TranslateAsyncTask extends AsyncTask < String, String, Boolean > {
   @
   Override
   protected Boolean doInBackground(String...arg0) {
-    translatedText = Translator.translate("en", "zh-CHT", sourceText);
-
-    // Check for failed translations.
-    if (translatedText.equals(Translator.BAD_TRANSLATION_MSG)) {
+    Translate.setClientId("davidbranniganz-translate");
+    Translate.setClientSecret("HxwO7LY6xkLB5EU9jWcR1MJWE0dI1AwMPTVBp13l+ek=");
+    try {
+      Log.d(TAG, "en -> zh-CHT");
+      translatedText = Translate.execute(sourceText, Language.fromString("en"),
+        Language.fromString("zh-CHT"));
+      return true;
+    } catch (Exception e) {
+      Log.e(TAG, "Caught exeption in translation request.");
+      e.printStackTrace();
+      translatedText = "[Translation unavailable]";
       return false;
     }
-
-    return true;
   }
 
   @
