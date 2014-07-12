@@ -24,9 +24,9 @@ import edu.sfsu.cs.orange.ocr.CaptureActivity;
 
 public class TranslatorBing {
   private static final String TAG = TranslatorBing.class.getSimpleName();
-  private static final String CLIENT_ID = " [PUT YOUR CLIENT ID HERE] ";
-  private static final String CLIENT_SECRET = " [PUT YOUR CLIENT SECRET HERE] ";
-  
+  private static final String CLIENT_ID = "davidbranniganz-translate";
+  private static final String CLIENT_SECRET = "HxwO7LY6xkLB5EU9jWcR1MJWE0dI1AwMPTVBp13l+ek=";
+
   /**
    *  Translate using Microsoft Translate API
    * @param sourceLanguageCode Source language code, for example, "en"
@@ -39,7 +39,7 @@ public class TranslatorBing {
     Translate.setClientSecret(CLIENT_SECRET);
     try {
       Log.d(TAG, sourceLanguageCode + " -> " + targetLanguageCode);
-      return Translate.execute(sourceText, Language.fromString(sourceLanguageCode), 
+      return Translate.execute(sourceText, Language.fromString(sourceLanguageCode),
           Language.fromString(targetLanguageCode));
     } catch (Exception e) {
       Log.e(TAG, "Caught exeption in translation request.");
@@ -47,31 +47,31 @@ public class TranslatorBing {
       return Translator.BAD_TRANSLATION_MSG;
     }
   }
-  
+
   /**
-   * Convert the given name of a natural language into a Language from the enum of Languages 
+   * Convert the given name of a natural language into a Language from the enum of Languages
    * supported by this translation service.
-   * 
+   *
    * @param languageName The name of the language, for example, "English"
    * @return code representing this language, for example, "en", for this translation API
    * @throws IllegalArgumentException
    */
-  public static String toLanguage(String languageName) throws IllegalArgumentException {    
+  public static String toLanguage(String languageName) throws IllegalArgumentException {
     // Convert string to all caps
     String standardizedName = languageName.toUpperCase();
-    
+
     // Replace spaces with underscores
     standardizedName = standardizedName.replace(' ', '_');
-    
+
     // Remove parentheses
-    standardizedName = standardizedName.replace("(", "");   
+    standardizedName = standardizedName.replace("(", "");
     standardizedName = standardizedName.replace(")", "");
-    
+
     // Map Norwegian-Bokmal to Norwegian
     if (standardizedName.equals("NORWEGIAN_BOKMAL")) {
       standardizedName = "NORWEGIAN";
     }
-    
+
     try {
       return Language.valueOf(standardizedName).toString();
     } catch (IllegalArgumentException e) {
