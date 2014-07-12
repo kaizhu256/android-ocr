@@ -66,6 +66,8 @@ import edu.sfsu.cs.orange.ocr.camera.CameraManager;
 import edu.sfsu.cs.orange.ocr.camera.ShutterButton;
 import edu.sfsu.cs.orange.ocr.language.LanguageCodeHelper;
 import edu.sfsu.cs.orange.ocr.language.TranslateAsyncTask;
+// import WindowUtils for voice commands
+import com.google.android.glass.view.WindowUtils;
 
 /**
  * This activity opens the camera and does the actual scanning on a background thread. It draws a
@@ -223,6 +225,10 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     Window window = getWindow();
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+    // Requests a voice menu on this activity. As for any other
+    // window feature, be sure to request this before
+    // setContentView() is called
+    getWindow().requestFeature(WindowUtils.FEATURE_VOICE_COMMANDS);
     setContentView(R.layout.capture);
     viewfinderView = (ViewfinderView) findViewById(R.id.viewfinder_view);
     cameraButtonView = findViewById(R.id.camera_button_view);
