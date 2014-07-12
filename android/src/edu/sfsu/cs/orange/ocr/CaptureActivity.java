@@ -41,10 +41,14 @@ import android.graphics.Rect;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.hardware.Camera;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.EditTextPreference;
+import android.preference.ListPreference;
+import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.text.ClipboardManager;
 import android.text.SpannableStringBuilder;
@@ -70,10 +74,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.googlecode.tesseract.android.TessBaseAPI;
+import com.memetix.mst.language.Language;
+import com.memetix.mst.translate.Translate;
 
 import edu.sfsu.cs.orange.ocr.ShutterButton;
-import edu.sfsu.cs.orange.ocr.language.LanguageCodeHelper;
-import edu.sfsu.cs.orange.ocr.language.TranslateAsyncTask;
 import edu.sfsu.cs.orange.ocr.R;
 
 import java.io.File;
@@ -2370,4 +2374,588 @@ class CameraManager {
                                         rect.width(), rect.height(), reverseImage);
   }
 
+}
+
+
+
+
+/**
+ * Class for handling functions relating to converting between standard language
+ * codes, and converting language codes to language names.
+ */
+class LanguageCodeHelper {
+	public static final String TAG = "LanguageCodeHelper";
+
+	/**
+	 * Private constructor to enforce noninstantiability
+	 */
+	private LanguageCodeHelper() {
+		throw new AssertionError();
+	}
+
+	/**
+	 * Map an ISO 639-3 language code to an ISO 639-1 language code.
+	 *
+	 * There is one entry here for each language recognized by the OCR engine.
+	 *
+	 * @param languageCode
+	 *            ISO 639-3 language code
+	 * @return ISO 639-1 language code
+	 */
+	public static String mapLanguageCode(String languageCode) {
+	  if (languageCode.equals("afr")) { // Afrikaans
+	    return "af";
+	  } else if (languageCode.equals("sqi")) { // Albanian
+	    return "sq";
+	  } else if (languageCode.equals("ara")) { // Arabic
+	    return "ar";
+	  } else if (languageCode.equals("aze")) { // Azeri
+	    return "az";
+	  } else if (languageCode.equals("eus")) { // Basque
+	    return "eu";
+	  } else if (languageCode.equals("bel")) { // Belarusian
+	    return "be";
+	  } else if (languageCode.equals("ben")) { // Bengali
+	    return "bn";
+	  } else if (languageCode.equals("bul")) { // Bulgarian
+	    return "bg";
+	  } else if (languageCode.equals("cat")) { // Catalan
+	    return "ca";
+    } else if (languageCode.equals("chi_sim")) { // Chinese (Simplified)
+      return "zh-CN";
+    } else if (languageCode.equals("chi_tra")) { // Chinese (Traditional)
+      return "zh-TW";
+    } else if (languageCode.equals("hrv")) { // Croatian
+      return "hr";
+    } else if (languageCode.equals("ces")) { // Czech
+      return "cs";
+    } else if (languageCode.equals("dan")) { // Danish
+      return "da";
+    } else if (languageCode.equals("nld")) { // Dutch
+      return "nl";
+    } else if (languageCode.equals("eng")) { // English
+      return "en";
+    } else if (languageCode.equals("est")) { // Estonian
+      return "et";
+    } else if (languageCode.equals("fin")) { // Finnish
+      return "fi";
+    } else if (languageCode.equals("fra")) { // French
+      return "fr";
+    } else if (languageCode.equals("glg")) { // Galician
+      return "gl";
+    } else if (languageCode.equals("deu")) { // German
+      return "de";
+    } else if (languageCode.equals("ell")) { // Greek
+      return "el";
+    } else if (languageCode.equals("heb")) { // Hebrew
+      return "he";
+    } else if (languageCode.equals("hin")) { // Hindi
+      return "hi";
+    } else if (languageCode.equals("hun")) { // Hungarian
+      return "hu";
+    } else if (languageCode.equals("isl")) { // Icelandic
+      return "is";
+    } else if (languageCode.equals("ind")) { // Indonesian
+      return "id";
+    } else if (languageCode.equals("ita")) { // Italian
+      return "it";
+    } else if (languageCode.equals("jpn")) { // Japanese
+      return "ja";
+    } else if (languageCode.equals("kan")) { // Kannada
+      return "kn";
+    } else if (languageCode.equals("kor")) { // Korean
+      return "ko";
+    } else if (languageCode.equals("lav")) { // Latvian
+      return "lv";
+    } else if (languageCode.equals("lit")) { // Lithuanian
+      return "lt";
+    } else if (languageCode.equals("mkd")) { // Macedonian
+      return "mk";
+    } else if (languageCode.equals("msa")) { // Malay
+      return "ms";
+    } else if (languageCode.equals("mal")) { // Malayalam
+      return "ml";
+    } else if (languageCode.equals("mlt")) { // Maltese
+      return "mt";
+    } else if (languageCode.equals("nor")) { // Norwegian
+      return "no";
+    } else if (languageCode.equals("pol")) { // Polish
+      return "pl";
+    } else if (languageCode.equals("por")) { // Portuguese
+      return "pt";
+    } else if (languageCode.equals("ron")) { // Romanian
+      return "ro";
+    } else if (languageCode.equals("rus")) { // Russian
+      return "ru";
+    } else if (languageCode.equals("srp")) { // Serbian (Latin) // TODO is google expecting Cyrillic?
+      return "sr";
+    } else if (languageCode.equals("slk")) { // Slovak
+      return "sk";
+    } else if (languageCode.equals("slv")) { // Slovenian
+      return "sl";
+    } else if (languageCode.equals("spa")) { // Spanish
+      return "es";
+    } else if (languageCode.equals("swa")) { // Swahili
+      return "sw";
+    } else if (languageCode.equals("swe")) { // Swedish
+      return "sv";
+    } else if (languageCode.equals("tgl")) { // Tagalog
+      return "tl";
+    } else if (languageCode.equals("tam")) { // Tamil
+      return "ta";
+    } else if (languageCode.equals("tel")) { // Telugu
+      return "te";
+    } else if (languageCode.equals("tha")) { // Thai
+      return "th";
+    } else if (languageCode.equals("tur")) { // Turkish
+      return "tr";
+    } else if (languageCode.equals("ukr")) { // Ukrainian
+      return "uk";
+    } else if (languageCode.equals("vie")) { // Vietnamese
+      return "vi";
+	  } else {
+	    return "";
+	  }
+	}
+
+	/**
+	 * Map the given ISO 639-3 language code to a name of a language, for example,
+	 * "Spanish"
+	 *
+	 * @param context
+	 *            interface to calling application environment. Needed to access
+	 *            values from strings.xml.
+	 * @param languageCode
+	 *            ISO 639-3 language code
+	 * @return language name
+	 */
+	public static String getOcrLanguageName(Context context, String languageCode) {
+		Resources res = context.getResources();
+		String[] language6393 = res.getStringArray(R.array.iso6393);
+		String[] languageNames = res.getStringArray(R.array.languagenames);
+		int len;
+
+		// Finds the given language code in the iso6393 array, and takes the name with the same index
+		// from the languagenames array.
+		for (len = 0; len < language6393.length; len++) {
+			if (language6393[len].equals(languageCode)) {
+				Log.d(TAG, "getOcrLanguageName: " + languageCode + "->"
+						+ languageNames[len]);
+				return languageNames[len];
+			}
+		}
+
+		Log.d(TAG, "languageCode: Could not find language name for ISO 693-3: "
+				+ languageCode);
+		return languageCode;
+	}
+
+	/**
+   * Map the given ISO 639-1 language code to a name of a language, for example,
+   * "Spanish"
+	 *
+	 * @param languageCode
+	 *             ISO 639-1 language code
+	 * @return name of the language. For example, "English"
+	 */
+	public static String getTranslationLanguageName(Context context, String languageCode) {
+    Resources res = context.getResources();
+    String[] language6391 = res.getStringArray(R.array.translationtargetiso6391_google);
+    String[] languageNames = res.getStringArray(R.array.translationtargetlanguagenames_google);
+    int len;
+
+    // Finds the given language code in the translationtargetiso6391 array, and takes the name
+    // with the same index from the translationtargetlanguagenames array.
+    for (len = 0; len < language6391.length; len++) {
+      if (language6391[len].equals(languageCode)) {
+        Log.d(TAG, "getTranslationLanguageName: " + languageCode + "->" + languageNames[len]);
+        return languageNames[len];
+      }
+    }
+
+    // Now look in the Microsoft Translate API list. Currently this will only be needed for
+    // Haitian Creole.
+    language6391 = res.getStringArray(R.array.translationtargetiso6391_microsoft);
+    languageNames = res.getStringArray(R.array.translationtargetlanguagenames_microsoft);
+    for (len = 0; len < language6391.length; len++) {
+      if (language6391[len].equals(languageCode)) {
+        Log.d(TAG, "languageCode: " + languageCode + "->" + languageNames[len]);
+        return languageNames[len];
+      }
+    }
+
+    Log.d(TAG, "getTranslationLanguageName: Could not find language name for ISO 693-1: " +
+            languageCode);
+    return "";
+	}
+
+}
+
+
+
+/**
+ * Class to handle preferences that are saved across sessions of the app. Shows
+ * a hierarchy of preferences to the user, organized into sections. These
+ * preferences are displayed in the options menu that is shown when the user
+ * presses the MENU button.
+ *
+ * The code for this class was adapted from the ZXing project: http://code.google.com/p/zxing
+ */
+class PreferencesActivity extends PreferenceActivity implements
+  OnSharedPreferenceChangeListener {
+
+  // Preference keys not carried over from ZXing project
+  public static final String KEY_SOURCE_LANGUAGE_PREFERENCE = "sourceLanguageCodeOcrPref";
+  public static final String KEY_TARGET_LANGUAGE_PREFERENCE = "targetLanguageCodeTranslationPref";
+  public static final String KEY_TOGGLE_TRANSLATION = "preference_translation_toggle_translation";
+  public static final String KEY_CONTINUOUS_PREVIEW = "preference_capture_continuous";
+  public static final String KEY_PAGE_SEGMENTATION_MODE = "preference_page_segmentation_mode";
+  public static final String KEY_OCR_ENGINE_MODE = "preference_ocr_engine_mode";
+  public static final String KEY_CHARACTER_BLACKLIST = "preference_character_blacklist";
+  public static final String KEY_CHARACTER_WHITELIST = "preference_character_whitelist";
+  public static final String KEY_TOGGLE_LIGHT = "preference_toggle_light";
+  public static final String KEY_TRANSLATOR = "preference_translator";
+
+  // Preference keys carried over from ZXing project
+  public static final String KEY_AUTO_FOCUS = "preferences_auto_focus";
+  public static final String KEY_DISABLE_CONTINUOUS_FOCUS = "preferences_disable_continuous_focus";
+  public static final String KEY_HELP_VERSION_SHOWN = "preferences_help_version_shown";
+  public static final String KEY_NOT_OUR_RESULTS_SHOWN = "preferences_not_our_results_shown";
+  public static final String KEY_REVERSE_IMAGE = "preferences_reverse_image";
+  public static final String KEY_PLAY_BEEP = "preferences_play_beep";
+  public static final String KEY_VIBRATE = "preferences_vibrate";
+
+  public static final String TRANSLATOR_BING = "Bing Translator";
+
+  private ListPreference listPreferenceSourceLanguage;
+  private ListPreference listPreferenceTargetLanguage;
+  private ListPreference listPreferenceTranslator;
+  private ListPreference listPreferenceOcrEngineMode;
+  private EditTextPreference editTextPreferenceCharacterBlacklist;
+  private EditTextPreference editTextPreferenceCharacterWhitelist;
+  private ListPreference listPreferencePageSegmentationMode;
+
+  private static SharedPreferences sharedPreferences;
+
+  /**
+   * Set the default preference values.
+   *
+   * @param Bundle
+   *            savedInstanceState the current Activity's state, as passed by
+   *            Android
+   */
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    addPreferencesFromResource(R.xml.preferences);
+
+    sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+    listPreferenceSourceLanguage = (ListPreference) getPreferenceScreen().findPreference(KEY_SOURCE_LANGUAGE_PREFERENCE);
+    listPreferenceTargetLanguage = (ListPreference) getPreferenceScreen().findPreference(KEY_TARGET_LANGUAGE_PREFERENCE);
+    listPreferenceTranslator = (ListPreference) getPreferenceScreen().findPreference(KEY_TRANSLATOR);
+    listPreferenceOcrEngineMode = (ListPreference) getPreferenceScreen().findPreference(KEY_OCR_ENGINE_MODE);
+    editTextPreferenceCharacterBlacklist = (EditTextPreference) getPreferenceScreen().findPreference(KEY_CHARACTER_BLACKLIST);
+    editTextPreferenceCharacterWhitelist = (EditTextPreference) getPreferenceScreen().findPreference(KEY_CHARACTER_WHITELIST);
+    listPreferencePageSegmentationMode = (ListPreference) getPreferenceScreen().findPreference(KEY_PAGE_SEGMENTATION_MODE);
+
+    // Create the entries/entryvalues for the translation target language list.
+    initTranslationTargetList();
+
+  }
+
+  /**
+   * Interface definition for a callback to be invoked when a shared
+   * preference is changed. Sets summary text for the app's preferences. Summary text values show the
+   * current settings for the values.
+   *
+   * @param sharedPreferences
+   *            the Android.content.SharedPreferences that received the change
+   * @param key
+   *            the key of the preference that was changed, added, or removed
+   */
+  @Override
+  public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+      String key) {
+    // Update preference summary values to show current preferences
+    if (key.equals(KEY_TRANSLATOR)) {
+      listPreferenceTranslator.setSummary(sharedPreferences.getString(key, CaptureActivity.DEFAULT_TRANSLATOR));
+    } else if(key.equals(KEY_SOURCE_LANGUAGE_PREFERENCE)) {
+
+      // Set the summary text for the source language name
+      listPreferenceSourceLanguage.setSummary(LanguageCodeHelper.getOcrLanguageName(getBaseContext(), sharedPreferences.getString(key, CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE)));
+
+      // Retrieve the character blacklist/whitelist for the new language
+      String blacklist = OcrCharacterHelper.getBlacklist(sharedPreferences, listPreferenceSourceLanguage.getValue());
+      String whitelist = OcrCharacterHelper.getWhitelist(sharedPreferences, listPreferenceSourceLanguage.getValue());
+
+      // Save the character blacklist/whitelist to preferences
+      sharedPreferences.edit().putString(KEY_CHARACTER_BLACKLIST, blacklist).commit();
+      sharedPreferences.edit().putString(KEY_CHARACTER_WHITELIST, whitelist).commit();
+
+      // Set the blacklist/whitelist summary text
+      editTextPreferenceCharacterBlacklist.setSummary(blacklist);
+      editTextPreferenceCharacterWhitelist.setSummary(whitelist);
+
+    } else if (key.equals(KEY_TARGET_LANGUAGE_PREFERENCE)) {
+      listPreferenceTargetLanguage.setSummary(LanguageCodeHelper.getTranslationLanguageName(this, sharedPreferences.getString(key, CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE)));
+    } else if (key.equals(KEY_PAGE_SEGMENTATION_MODE)) {
+      listPreferencePageSegmentationMode.setSummary(sharedPreferences.getString(key, CaptureActivity.DEFAULT_PAGE_SEGMENTATION_MODE));
+    } else if (key.equals(KEY_OCR_ENGINE_MODE)) {
+      listPreferenceOcrEngineMode.setSummary(sharedPreferences.getString(key, CaptureActivity.DEFAULT_OCR_ENGINE_MODE));
+    } else if (key.equals(KEY_CHARACTER_BLACKLIST)) {
+
+      // Save a separate, language-specific character blacklist for this language
+      OcrCharacterHelper.setBlacklist(sharedPreferences,
+          listPreferenceSourceLanguage.getValue(),
+          sharedPreferences.getString(key, OcrCharacterHelper.getDefaultBlacklist(listPreferenceSourceLanguage.getValue())));
+
+      // Set the summary text
+      editTextPreferenceCharacterBlacklist.setSummary(sharedPreferences.getString(key, OcrCharacterHelper.getDefaultBlacklist(listPreferenceSourceLanguage.getValue())));
+
+    } else if (key.equals(KEY_CHARACTER_WHITELIST)) {
+
+      // Save a separate, language-specific character blacklist for this language
+      OcrCharacterHelper.setWhitelist(sharedPreferences,
+          listPreferenceSourceLanguage.getValue(),
+          sharedPreferences.getString(key, OcrCharacterHelper.getDefaultWhitelist(listPreferenceSourceLanguage.getValue())));
+
+      // Set the summary text
+      editTextPreferenceCharacterWhitelist.setSummary(sharedPreferences.getString(key, OcrCharacterHelper.getDefaultWhitelist(listPreferenceSourceLanguage.getValue())));
+
+    }
+
+    // Update the languages available for translation based on the current translator selected.
+    if (key.equals(KEY_TRANSLATOR)) {
+      initTranslationTargetList();
+    }
+
+  }
+
+  /**
+   * Sets the list of available languages and the current target language for translation. Called
+   * when the key for the current translator is changed.
+   */
+  void initTranslationTargetList() {
+    // Set the preference for the target language code, in case we've just switched from Google
+    // to Bing, or Bing to Google.
+    String currentLanguageCode = sharedPreferences.getString(KEY_TARGET_LANGUAGE_PREFERENCE,
+        CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE);
+
+    // Get the name of our language
+    String currentLanguage = LanguageCodeHelper.getTranslationLanguageName(getBaseContext(),
+        currentLanguageCode);
+    String[] translators = getResources().getStringArray(R.array.translators);
+    String translator = sharedPreferences.getString(KEY_TRANSLATOR, CaptureActivity.DEFAULT_TRANSLATOR);
+    String newLanguageCode = "";
+      // Update the list of available languages for the currently-chosen translation API.
+      listPreferenceTargetLanguage.setEntries(R.array.translationtargetlanguagenames_microsoft);
+      listPreferenceTargetLanguage.setEntryValues(R.array.translationtargetiso6391_microsoft);
+
+      // Get the corresponding code for our language name
+      newLanguageCode = TranslatorBing.toLanguage(currentLanguage);
+
+    // Store the code as the target language preference
+    String newLanguageName = LanguageCodeHelper.getTranslationLanguageName(getBaseContext(),
+        newLanguageCode);
+    listPreferenceTargetLanguage.setValue(newLanguageName); // Set the radio button in the list
+    sharedPreferences.edit().putString(PreferencesActivity.KEY_TARGET_LANGUAGE_PREFERENCE,
+        newLanguageCode).commit();
+    listPreferenceTargetLanguage.setSummary(newLanguageName);
+  }
+
+  /**
+   * Sets up initial preference summary text
+   * values and registers the OnSharedPreferenceChangeListener.
+   */
+  @Override
+  protected void onResume() {
+    super.onResume();
+    // Set up the initial summary values
+    listPreferenceTranslator.setSummary(sharedPreferences.getString(KEY_TRANSLATOR, CaptureActivity.DEFAULT_TRANSLATOR));
+    listPreferenceSourceLanguage.setSummary(LanguageCodeHelper.getOcrLanguageName(getBaseContext(), sharedPreferences.getString(KEY_SOURCE_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE)));
+    listPreferenceTargetLanguage.setSummary(LanguageCodeHelper.getTranslationLanguageName(getBaseContext(), sharedPreferences.getString(KEY_TARGET_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE)));
+    listPreferencePageSegmentationMode.setSummary(sharedPreferences.getString(KEY_PAGE_SEGMENTATION_MODE, CaptureActivity.DEFAULT_PAGE_SEGMENTATION_MODE));
+    listPreferenceOcrEngineMode.setSummary(sharedPreferences.getString(KEY_OCR_ENGINE_MODE, CaptureActivity.DEFAULT_OCR_ENGINE_MODE));
+    editTextPreferenceCharacterBlacklist.setSummary(sharedPreferences.getString(KEY_CHARACTER_BLACKLIST, OcrCharacterHelper.getDefaultBlacklist(listPreferenceSourceLanguage.getValue())));
+    editTextPreferenceCharacterWhitelist.setSummary(sharedPreferences.getString(KEY_CHARACTER_WHITELIST, OcrCharacterHelper.getDefaultWhitelist(listPreferenceSourceLanguage.getValue())));
+
+    // Set up a listener whenever a key changes
+    getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+  }
+
+  /**
+   * Called when Activity is about to lose focus. Unregisters the
+   * OnSharedPreferenceChangeListener.
+   */
+  @Override
+  protected void onPause() {
+    super.onPause();
+    getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+  }
+}
+
+
+
+
+/**
+ * Delegates translation requests to the appropriate translation service.
+ */
+class Translator {
+
+  public static final String BAD_TRANSLATION_MSG = "[Translation unavailable]";
+
+  private Translator(Activity activity) {
+    // Private constructor to enforce noninstantiability
+  }
+
+  static String translate(Activity activity, String sourceLanguageCode, String targetLanguageCode, String sourceText) {
+
+    // Check preferences to determine which translation API to use--Google, or Bing.
+    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+    String api = prefs.getString(PreferencesActivity.KEY_TRANSLATOR, CaptureActivity.DEFAULT_TRANSLATOR);
+
+    // Delegate the translation based on the user's preference.
+
+      // Get the correct code for the source language for this translation service.
+      sourceLanguageCode = TranslatorBing.toLanguage(
+          LanguageCodeHelper.getTranslationLanguageName(activity.getBaseContext(), sourceLanguageCode));
+
+      return TranslatorBing.translate(sourceLanguageCode, targetLanguageCode, sourceText);
+  }
+}
+
+
+
+
+class TranslatorBing {
+  private static final String TAG = TranslatorBing.class.getSimpleName();
+  private static final String CLIENT_ID = "davidbranniganz-translate";
+  private static final String CLIENT_SECRET = "HxwO7LY6xkLB5EU9jWcR1MJWE0dI1AwMPTVBp13l+ek=";
+
+  /**
+   *  Translate using Microsoft Translate API
+   * @param sourceLanguageCode Source language code, for example, "en"
+   * @param targetLanguageCode Target language code, for example, "es"
+   * @param sourceText Text to send for translation
+   * @return Translated text
+   */
+  static String translate(String sourceLanguageCode, String targetLanguageCode, String sourceText) {
+    Translate.setClientId(CLIENT_ID);
+    Translate.setClientSecret(CLIENT_SECRET);
+    try {
+      Log.d(TAG, sourceLanguageCode + " -> " + targetLanguageCode);
+      return Translate.execute(sourceText, Language.fromString(sourceLanguageCode),
+          Language.fromString(targetLanguageCode));
+    } catch (Exception e) {
+      Log.e(TAG, "Caught exeption in translation request.");
+      e.printStackTrace();
+      return Translator.BAD_TRANSLATION_MSG;
+    }
+  }
+
+  /**
+   * Convert the given name of a natural language into a Language from the enum of Languages
+   * supported by this translation service.
+   *
+   * @param languageName The name of the language, for example, "English"
+   * @return code representing this language, for example, "en", for this translation API
+   * @throws IllegalArgumentException
+   */
+  public static String toLanguage(String languageName) throws IllegalArgumentException {
+    // Convert string to all caps
+    String standardizedName = languageName.toUpperCase();
+
+    // Replace spaces with underscores
+    standardizedName = standardizedName.replace(' ', '_');
+
+    // Remove parentheses
+    standardizedName = standardizedName.replace("(", "");
+    standardizedName = standardizedName.replace(")", "");
+
+    // Map Norwegian-Bokmal to Norwegian
+    if (standardizedName.equals("NORWEGIAN_BOKMAL")) {
+      standardizedName = "NORWEGIAN";
+    }
+
+    try {
+      return Language.valueOf(standardizedName).toString();
+    } catch (IllegalArgumentException e) {
+      Log.e(TAG, "Not found--returning default language code");
+      return CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE;
+    }
+  }
+}
+
+
+
+
+/**
+ * Class to perform translations in the background.
+ */
+class TranslateAsyncTask extends AsyncTask<String, String, Boolean> {
+
+  private static final String TAG = TranslateAsyncTask.class.getSimpleName();
+
+  private CaptureActivity activity;
+  private TextView textView;
+  private View progressView;
+  private TextView targetLanguageTextView;
+  private String sourceLanguageCode;
+  private String targetLanguageCode;
+  private String sourceText;
+  private String translatedText = "";
+
+  public TranslateAsyncTask(CaptureActivity activity, String sourceLanguageCode, String targetLanguageCode,
+      String sourceText) {
+    this.activity = activity;
+    this.sourceLanguageCode = sourceLanguageCode;
+    this.targetLanguageCode = targetLanguageCode;
+    this.sourceText = sourceText;
+    textView = (TextView) activity.findViewById(R.id.translation_text_view);
+    progressView = (View) activity.findViewById(R.id.indeterminate_progress_indicator_view);
+    targetLanguageTextView = (TextView) activity.findViewById(R.id.translation_language_text_view);
+  }
+
+  @Override
+  protected Boolean doInBackground(String... arg0) {
+    translatedText = Translator.translate(activity, sourceLanguageCode, targetLanguageCode, sourceText);
+
+    // Check for failed translations.
+    if (translatedText.equals(Translator.BAD_TRANSLATION_MSG)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  protected synchronized void onPostExecute(Boolean result) {
+    super.onPostExecute(result);
+
+    if (result) {
+      //Log.i(TAG, "SUCCESS");
+      if (targetLanguageTextView != null) {
+        targetLanguageTextView.setTypeface(Typeface.defaultFromStyle(Typeface.NORMAL), Typeface.NORMAL);
+      }
+      textView.setText(translatedText);
+      textView.setVisibility(View.VISIBLE);
+      textView.setTextColor(activity.getResources().getColor(R.color.translation_text));
+
+      // Crudely scale betweeen 22 and 32 -- bigger font for shorter text
+      int scaledSize = Math.max(22, 32 - translatedText.length() / 4);
+      textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, scaledSize);
+
+    } else {
+      Log.e(TAG, "FAILURE");
+      targetLanguageTextView.setTypeface(Typeface.defaultFromStyle(Typeface.ITALIC), Typeface.ITALIC);
+      targetLanguageTextView.setText("Unavailable");
+
+    }
+
+    // Turn off the indeterminate progress indicator
+    if (progressView != null) {
+      progressView.setVisibility(View.GONE);
+    }
+  }
 }
