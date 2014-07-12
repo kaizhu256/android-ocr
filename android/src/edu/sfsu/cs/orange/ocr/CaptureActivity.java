@@ -18,8 +18,6 @@
 package edu.sfsu.cs.orange.ocr;
 
 
-import android.util.AttributeSet;
-import android.view.View;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -54,6 +52,7 @@ import android.text.ClipboardManager;
 import android.text.SpannableStringBuilder;
 import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextMenu;
