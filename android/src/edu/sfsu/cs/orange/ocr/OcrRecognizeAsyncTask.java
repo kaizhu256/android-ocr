@@ -30,11 +30,11 @@ import android.util.Log;
  */
 final class OcrRecognizeAsyncTask extends AsyncTask<Void, Void, Boolean> {
 
-  //  private static final boolean PERFORM_FISHER_THRESHOLDING = false; 
-  //  private static final boolean PERFORM_OTSU_THRESHOLDING = false; 
-  //  private static final boolean PERFORM_SOBEL_THRESHOLDING = false; 
+  //  private static final boolean PERFORM_FISHER_THRESHOLDING = false;
+  //  private static final boolean PERFORM_OTSU_THRESHOLDING = false;
+  //  private static final boolean PERFORM_SOBEL_THRESHOLDING = false;
 
-  private CaptureActivity activity;
+  private MainActivity activity;
   private TessBaseAPI baseApi;
   private byte[] data;
   private int width;
@@ -42,7 +42,7 @@ final class OcrRecognizeAsyncTask extends AsyncTask<Void, Void, Boolean> {
   private OcrResult ocrResult;
   private long timeRequired;
 
-  OcrRecognizeAsyncTask(CaptureActivity activity, TessBaseAPI baseApi, byte[] data, int width, int height) {
+  OcrRecognizeAsyncTask(MainActivity activity, TessBaseAPI baseApi, byte[] data, int width, int height) {
     this.activity = activity;
     this.baseApi = baseApi;
     this.data = data;
@@ -72,7 +72,7 @@ final class OcrRecognizeAsyncTask extends AsyncTask<Void, Void, Boolean> {
     //        bitmap = WriteFile.writeBitmap(thresholdedImage);
     //      }
 
-    try {     
+    try {
       baseApi.setImage(ReadFile.readBitmap(bitmap));
       textResult = baseApi.getUTF8Text();
       timeRequired = System.currentTimeMillis() - start;

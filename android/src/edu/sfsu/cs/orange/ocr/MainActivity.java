@@ -42,6 +42,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -71,12 +72,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.googlecode.leptonica.android.ReadFile;
 import com.googlecode.tesseract.android.TessBaseAPI;
 import com.memetix.mst.language.Language;
 import com.memetix.mst.translate.Translate;
 
-import edu.sfsu.cs.orange.ocr.ShutterButton;
 import edu.sfsu.cs.orange.ocr.R;
+import edu.sfsu.cs.orange.ocr.ShutterButton;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,6 +86,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.concurrent.CountDownLatch;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -97,10 +100,10 @@ import com.google.android.glass.view.WindowUtils;
  *
  * The code for this class was adapted from the ZXing project: http://code.google.com/p/zxing/
  */
-public final class CaptureActivity extends Activity implements SurfaceHolder.Callback,
+public final class MainActivity extends Activity implements SurfaceHolder.Callback,
   ShutterButton.OnShutterButtonListener {
 
-    private static final String TAG = CaptureActivity.class.getSimpleName();
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     // Note: These constants will be overridden by any default values defined in preferences.xml.
 
@@ -1094,12 +1097,12 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
       // Retrieve from preferences, and set in this Activity, the language preferences
       PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-      setSourceLanguage(prefs.getString(PreferencesActivity.KEY_SOURCE_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE));
-      setTargetLanguage(prefs.getString(PreferencesActivity.KEY_TARGET_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE));
+      setSourceLanguage(prefs.getString(PreferencesActivity.KEY_SOURCE_LANGUAGE_PREFERENCE, MainActivity.DEFAULT_SOURCE_LANGUAGE_CODE));
+      setTargetLanguage(prefs.getString(PreferencesActivity.KEY_TARGET_LANGUAGE_PREFERENCE, MainActivity.DEFAULT_TARGET_LANGUAGE_CODE));
       isTranslationActive = prefs.getBoolean(PreferencesActivity.KEY_TOGGLE_TRANSLATION, false);
 
       // Retrieve from preferences, and set in this Activity, the capture mode preference
-      if (prefs.getBoolean(PreferencesActivity.KEY_CONTINUOUS_PREVIEW, CaptureActivity.DEFAULT_TOGGLE_CONTINUOUS)) {
+      if (prefs.getBoolean(PreferencesActivity.KEY_CONTINUOUS_PREVIEW, MainActivity.DEFAULT_TOGGLE_CONTINUOUS)) {
         isContinuousModeActive = true;
       } else {
         isContinuousModeActive = false;
@@ -1153,45 +1156,45 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
       // Continuous preview
-      prefs.edit().putBoolean(PreferencesActivity.KEY_CONTINUOUS_PREVIEW, CaptureActivity.DEFAULT_TOGGLE_CONTINUOUS).commit();
+      prefs.edit().putBoolean(PreferencesActivity.KEY_CONTINUOUS_PREVIEW, MainActivity.DEFAULT_TOGGLE_CONTINUOUS).commit();
 
       // Recognition language
-      prefs.edit().putString(PreferencesActivity.KEY_SOURCE_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE).commit();
+      prefs.edit().putString(PreferencesActivity.KEY_SOURCE_LANGUAGE_PREFERENCE, MainActivity.DEFAULT_SOURCE_LANGUAGE_CODE).commit();
 
       // Translation
-      prefs.edit().putBoolean(PreferencesActivity.KEY_TOGGLE_TRANSLATION, CaptureActivity.DEFAULT_TOGGLE_TRANSLATION).commit();
+      prefs.edit().putBoolean(PreferencesActivity.KEY_TOGGLE_TRANSLATION, MainActivity.DEFAULT_TOGGLE_TRANSLATION).commit();
 
       // Translation target language
-      prefs.edit().putString(PreferencesActivity.KEY_TARGET_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE).commit();
+      prefs.edit().putString(PreferencesActivity.KEY_TARGET_LANGUAGE_PREFERENCE, MainActivity.DEFAULT_TARGET_LANGUAGE_CODE).commit();
 
       // OCR Engine
-      prefs.edit().putString(PreferencesActivity.KEY_OCR_ENGINE_MODE, CaptureActivity.DEFAULT_OCR_ENGINE_MODE).commit();
+      prefs.edit().putString(PreferencesActivity.KEY_OCR_ENGINE_MODE, MainActivity.DEFAULT_OCR_ENGINE_MODE).commit();
 
       // Autofocus
-      prefs.edit().putBoolean(PreferencesActivity.KEY_AUTO_FOCUS, CaptureActivity.DEFAULT_TOGGLE_AUTO_FOCUS).commit();
+      prefs.edit().putBoolean(PreferencesActivity.KEY_AUTO_FOCUS, MainActivity.DEFAULT_TOGGLE_AUTO_FOCUS).commit();
 
       // Disable problematic focus modes
-      prefs.edit().putBoolean(PreferencesActivity.KEY_DISABLE_CONTINUOUS_FOCUS, CaptureActivity.DEFAULT_DISABLE_CONTINUOUS_FOCUS).commit();
+      prefs.edit().putBoolean(PreferencesActivity.KEY_DISABLE_CONTINUOUS_FOCUS, MainActivity.DEFAULT_DISABLE_CONTINUOUS_FOCUS).commit();
 
       // Beep
-      prefs.edit().putBoolean(PreferencesActivity.KEY_PLAY_BEEP, CaptureActivity.DEFAULT_TOGGLE_BEEP).commit();
+      prefs.edit().putBoolean(PreferencesActivity.KEY_PLAY_BEEP, MainActivity.DEFAULT_TOGGLE_BEEP).commit();
 
       // Character blacklist
       prefs.edit().putString(PreferencesActivity.KEY_CHARACTER_BLACKLIST,
-        OcrCharacterHelper.getDefaultBlacklist(CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE)).commit();
+        OcrCharacterHelper.getDefaultBlacklist(MainActivity.DEFAULT_SOURCE_LANGUAGE_CODE)).commit();
 
       // Character whitelist
       prefs.edit().putString(PreferencesActivity.KEY_CHARACTER_WHITELIST,
-        OcrCharacterHelper.getDefaultWhitelist(CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE)).commit();
+        OcrCharacterHelper.getDefaultWhitelist(MainActivity.DEFAULT_SOURCE_LANGUAGE_CODE)).commit();
 
       // Page segmentation mode
-      prefs.edit().putString(PreferencesActivity.KEY_PAGE_SEGMENTATION_MODE, CaptureActivity.DEFAULT_PAGE_SEGMENTATION_MODE).commit();
+      prefs.edit().putString(PreferencesActivity.KEY_PAGE_SEGMENTATION_MODE, MainActivity.DEFAULT_PAGE_SEGMENTATION_MODE).commit();
 
       // Reversed camera image
-      prefs.edit().putBoolean(PreferencesActivity.KEY_REVERSE_IMAGE, CaptureActivity.DEFAULT_TOGGLE_REVERSED_IMAGE).commit();
+      prefs.edit().putBoolean(PreferencesActivity.KEY_REVERSE_IMAGE, MainActivity.DEFAULT_TOGGLE_REVERSED_IMAGE).commit();
 
       // Light
-      prefs.edit().putBoolean(PreferencesActivity.KEY_TOGGLE_LIGHT, CaptureActivity.DEFAULT_TOGGLE_LIGHT).commit();
+      prefs.edit().putBoolean(PreferencesActivity.KEY_TOGGLE_LIGHT, MainActivity.DEFAULT_TOGGLE_LIGHT).commit();
     }
 
     void displayProgressDialog() {
@@ -1601,7 +1604,7 @@ class CaptureActivityHandler extends Handler {
 
   private static final String TAG = CaptureActivityHandler.class.getSimpleName();
 
-  private final CaptureActivity activity;
+  private final MainActivity activity;
   private final DecodeThread decodeThread;
   private static State state;
   private final CameraManager cameraManager;
@@ -1615,7 +1618,7 @@ class CaptureActivityHandler extends Handler {
     DONE
   }
 
-  CaptureActivityHandler(CaptureActivity activity, CameraManager cameraManager, boolean isContinuousModeActive) {
+  CaptureActivityHandler(MainActivity activity, CameraManager cameraManager, boolean isContinuousModeActive) {
     this.activity = activity;
     this.cameraManager = cameraManager;
 
@@ -2633,7 +2636,7 @@ OnSharedPreferenceChangeListener {
     } else if (key.equals(KEY_SOURCE_LANGUAGE_PREFERENCE)) {
 
       // Set the summary text for the source language name
-      listPreferenceSourceLanguage.setSummary(LanguageCodeHelper.getOcrLanguageName(getBaseContext(), sharedPreferences.getString(key, CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE)));
+      listPreferenceSourceLanguage.setSummary(LanguageCodeHelper.getOcrLanguageName(getBaseContext(), sharedPreferences.getString(key, MainActivity.DEFAULT_SOURCE_LANGUAGE_CODE)));
 
       // Retrieve the character blacklist/whitelist for the new language
       String blacklist = OcrCharacterHelper.getBlacklist(sharedPreferences, listPreferenceSourceLanguage.getValue());
@@ -2648,11 +2651,11 @@ OnSharedPreferenceChangeListener {
       editTextPreferenceCharacterWhitelist.setSummary(whitelist);
 
     } else if (key.equals(KEY_TARGET_LANGUAGE_PREFERENCE)) {
-      listPreferenceTargetLanguage.setSummary(LanguageCodeHelper.getTranslationLanguageName(this, sharedPreferences.getString(key, CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE)));
+      listPreferenceTargetLanguage.setSummary(LanguageCodeHelper.getTranslationLanguageName(this, sharedPreferences.getString(key, MainActivity.DEFAULT_TARGET_LANGUAGE_CODE)));
     } else if (key.equals(KEY_PAGE_SEGMENTATION_MODE)) {
-      listPreferencePageSegmentationMode.setSummary(sharedPreferences.getString(key, CaptureActivity.DEFAULT_PAGE_SEGMENTATION_MODE));
+      listPreferencePageSegmentationMode.setSummary(sharedPreferences.getString(key, MainActivity.DEFAULT_PAGE_SEGMENTATION_MODE));
     } else if (key.equals(KEY_OCR_ENGINE_MODE)) {
-      listPreferenceOcrEngineMode.setSummary(sharedPreferences.getString(key, CaptureActivity.DEFAULT_OCR_ENGINE_MODE));
+      listPreferenceOcrEngineMode.setSummary(sharedPreferences.getString(key, MainActivity.DEFAULT_OCR_ENGINE_MODE));
     } else if (key.equals(KEY_CHARACTER_BLACKLIST)) {
 
       // Save a separate, language-specific character blacklist for this language
@@ -2686,10 +2689,10 @@ OnSharedPreferenceChangeListener {
   protected void onResume() {
     super.onResume();
     // Set up the initial summary values
-    listPreferenceSourceLanguage.setSummary(LanguageCodeHelper.getOcrLanguageName(getBaseContext(), sharedPreferences.getString(KEY_SOURCE_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE)));
-    listPreferenceTargetLanguage.setSummary(LanguageCodeHelper.getTranslationLanguageName(getBaseContext(), sharedPreferences.getString(KEY_TARGET_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE)));
-    listPreferencePageSegmentationMode.setSummary(sharedPreferences.getString(KEY_PAGE_SEGMENTATION_MODE, CaptureActivity.DEFAULT_PAGE_SEGMENTATION_MODE));
-    listPreferenceOcrEngineMode.setSummary(sharedPreferences.getString(KEY_OCR_ENGINE_MODE, CaptureActivity.DEFAULT_OCR_ENGINE_MODE));
+    listPreferenceSourceLanguage.setSummary(LanguageCodeHelper.getOcrLanguageName(getBaseContext(), sharedPreferences.getString(KEY_SOURCE_LANGUAGE_PREFERENCE, MainActivity.DEFAULT_SOURCE_LANGUAGE_CODE)));
+    listPreferenceTargetLanguage.setSummary(LanguageCodeHelper.getTranslationLanguageName(getBaseContext(), sharedPreferences.getString(KEY_TARGET_LANGUAGE_PREFERENCE, MainActivity.DEFAULT_TARGET_LANGUAGE_CODE)));
+    listPreferencePageSegmentationMode.setSummary(sharedPreferences.getString(KEY_PAGE_SEGMENTATION_MODE, MainActivity.DEFAULT_PAGE_SEGMENTATION_MODE));
+    listPreferenceOcrEngineMode.setSummary(sharedPreferences.getString(KEY_OCR_ENGINE_MODE, MainActivity.DEFAULT_OCR_ENGINE_MODE));
     editTextPreferenceCharacterBlacklist.setSummary(sharedPreferences.getString(KEY_CHARACTER_BLACKLIST, OcrCharacterHelper.getDefaultBlacklist(listPreferenceSourceLanguage.getValue())));
     editTextPreferenceCharacterWhitelist.setSummary(sharedPreferences.getString(KEY_CHARACTER_WHITELIST, OcrCharacterHelper.getDefaultWhitelist(listPreferenceSourceLanguage.getValue())));
 
@@ -2719,7 +2722,7 @@ class TranslateAsyncTask extends AsyncTask < String, String, Boolean > {
 
   private static final String TAG = TranslateAsyncTask.class.getSimpleName();
 
-  private CaptureActivity activity;
+  private MainActivity activity;
   private TextView textView;
   private View progressView;
   private TextView targetLanguageTextView;
@@ -2728,7 +2731,7 @@ class TranslateAsyncTask extends AsyncTask < String, String, Boolean > {
   private String sourceText;
   private String translatedText = "";
 
-  public TranslateAsyncTask(CaptureActivity activity, String sourceLanguageCode, String targetLanguageCode,
+  public TranslateAsyncTask(MainActivity activity, String sourceLanguageCode, String targetLanguageCode,
     String sourceText) {
     this.activity = activity;
     this.sourceLanguageCode = sourceLanguageCode;
@@ -2786,5 +2789,215 @@ class TranslateAsyncTask extends AsyncTask < String, String, Boolean > {
     if (progressView != null) {
       progressView.setVisibility(View.GONE);
     }
+  }
+}
+
+
+
+/**
+ * Class to send bitmap data for OCR.
+ *
+ * The code for this class was adapted from the ZXing project: http://code.google.com/p/zxing/
+ */
+class DecodeHandler extends Handler {
+
+  private final MainActivity activity;
+  private boolean running = true;
+  private final TessBaseAPI baseApi;
+  private Bitmap bitmap;
+  private static boolean isDecodePending;
+  private long timeRequired;
+
+  DecodeHandler(MainActivity activity) {
+    this.activity = activity;
+    baseApi = activity.getBaseApi();
+  }
+
+  @Override
+  public void handleMessage(Message message) {
+    if (!running) {
+      return;
+    }
+    if (message.what == R.id.ocr_continuous_decode) {
+		// Only request a decode if a request is not already pending.
+		  if (!isDecodePending) {
+		    isDecodePending = true;
+		    ocrContinuousDecode((byte[]) message.obj, message.arg1, message.arg2);
+		  }
+	} else if (message.what == R.id.ocr_decode) {
+		ocrDecode((byte[]) message.obj, message.arg1, message.arg2);
+	} else if (message.what == R.id.quit) {
+		running = false;
+		Looper.myLooper().quit();
+	}
+  }
+
+  static void resetDecodeState() {
+    isDecodePending = false;
+  }
+
+  /**
+   *  Launch an AsyncTask to perform an OCR decode for single-shot mode.
+   *
+   * @param data Image data
+   * @param width Image width
+   * @param height Image height
+   */
+  private void ocrDecode(byte[] data, int width, int height) {
+    activity.displayProgressDialog();
+
+    // Launch OCR asynchronously, so we get the dialog box displayed immediately
+    new OcrRecognizeAsyncTask(activity, baseApi, data, width, height).execute();
+  }
+
+  /**
+   *  Perform an OCR decode for realtime recognition mode.
+   *
+   * @param data Image data
+   * @param width Image width
+   * @param height Image height
+   */
+  private void ocrContinuousDecode(byte[] data, int width, int height) {
+    PlanarYUVLuminanceSource source = activity.getCameraManager().buildLuminanceSource(data, width, height);
+    if (source == null) {
+      sendContinuousOcrFailMessage();
+      return;
+    }
+    bitmap = source.renderCroppedGreyscaleBitmap();
+
+    OcrResult ocrResult = getOcrResult();
+    Handler handler = activity.getHandler();
+    if (handler == null) {
+      return;
+    }
+
+    if (ocrResult == null) {
+      try {
+        sendContinuousOcrFailMessage();
+      } catch (NullPointerException e) {
+        activity.stopHandler();
+      } finally {
+        bitmap.recycle();
+        baseApi.clear();
+      }
+      return;
+    }
+
+    try {
+      Message message = Message.obtain(handler, R.id.ocr_continuous_decode_succeeded, ocrResult);
+      message.sendToTarget();
+    } catch (NullPointerException e) {
+      activity.stopHandler();
+    } finally {
+      baseApi.clear();
+    }
+  }
+
+  @SuppressWarnings("unused")
+	private OcrResult getOcrResult() {
+    OcrResult ocrResult;
+    String textResult;
+    long start = System.currentTimeMillis();
+
+    try {
+      baseApi.setImage(ReadFile.readBitmap(bitmap));
+      textResult = baseApi.getUTF8Text();
+      timeRequired = System.currentTimeMillis() - start;
+
+      // Check for failure to recognize text
+      if (textResult == null || textResult.equals("")) {
+        return null;
+      }
+      ocrResult = new OcrResult();
+      ocrResult.setWordConfidences(baseApi.wordConfidences());
+      ocrResult.setMeanConfidence( baseApi.meanConfidence());
+      if (ViewfinderView.DRAW_REGION_BOXES) {
+        ocrResult.setRegionBoundingBoxes(baseApi.getRegions().getBoxRects());
+      }
+      if (ViewfinderView.DRAW_TEXTLINE_BOXES) {
+        ocrResult.setTextlineBoundingBoxes(baseApi.getTextlines().getBoxRects());
+      }
+      if (ViewfinderView.DRAW_STRIP_BOXES) {
+        ocrResult.setStripBoundingBoxes(baseApi.getStrips().getBoxRects());
+      }
+
+      // Always get the word bounding boxes--we want it for annotating the bitmap after the user
+      // presses the shutter button, in addition to maybe wanting to draw boxes/words during the
+      // continuous mode recognition.
+      ocrResult.setWordBoundingBoxes(baseApi.getWords().getBoxRects());
+
+//      if (ViewfinderView.DRAW_CHARACTER_BOXES || ViewfinderView.DRAW_CHARACTER_TEXT) {
+//        ocrResult.setCharacterBoundingBoxes(baseApi.getCharacters().getBoxRects());
+//      }
+    } catch (RuntimeException e) {
+      Log.e("OcrRecognizeAsyncTask", "Caught RuntimeException in request to Tesseract. Setting state to CONTINUOUS_STOPPED.");
+      e.printStackTrace();
+      try {
+        baseApi.clear();
+        activity.stopHandler();
+      } catch (NullPointerException e1) {
+        // Continue
+      }
+      return null;
+    }
+    timeRequired = System.currentTimeMillis() - start;
+    ocrResult.setBitmap(bitmap);
+    ocrResult.setText(textResult);
+    ocrResult.setRecognitionTimeRequired(timeRequired);
+    return ocrResult;
+  }
+
+  private void sendContinuousOcrFailMessage() {
+    Handler handler = activity.getHandler();
+    if (handler != null) {
+      Message message = Message.obtain(handler, R.id.ocr_continuous_decode_failed, new OcrResultFailure(timeRequired));
+      message.sendToTarget();
+    }
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * This thread does all the heavy lifting of decoding the images.
+ *
+ * The code for this class was adapted from the ZXing project: http://code.google.com/p/zxing
+ */
+final class DecodeThread extends Thread {
+
+  private final MainActivity activity;
+  private Handler handler;
+  private final CountDownLatch handlerInitLatch;
+
+  DecodeThread(MainActivity activity) {
+    this.activity = activity;
+    handlerInitLatch = new CountDownLatch(1);
+  }
+
+  Handler getHandler() {
+    try {
+      handlerInitLatch.await();
+    } catch (InterruptedException ie) {
+      // continue?
+    }
+    return handler;
+  }
+
+  @Override
+  public void run() {
+    Looper.prepare();
+    handler = new DecodeHandler(activity);
+    handlerInitLatch.countDown();
+    Looper.loop();
   }
 }

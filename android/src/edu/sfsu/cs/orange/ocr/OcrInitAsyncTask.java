@@ -43,7 +43,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 /**
- * Installs the language data required for OCR, and initializes the OCR engine using a background 
+ * Installs the language data required for OCR, and initializes the OCR engine using a background
  * thread.
  */
 final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
@@ -52,17 +52,17 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
   /** Suffixes of required data files for Cube. */
   private static final String[] CUBE_DATA_FILES = {
     ".cube.bigrams",
-    ".cube.fold", 
-    ".cube.lm", 
-    ".cube.nn", 
-    ".cube.params", 
+    ".cube.fold",
+    ".cube.lm",
+    ".cube.nn",
+    ".cube.params",
     //".cube.size", // This file is not available for Hindi
-    ".cube.word-freq", 
-    ".tesseract_cube.nn", 
+    ".cube.word-freq",
+    ".tesseract_cube.nn",
     ".traineddata"
   };
 
-  private CaptureActivity activity;
+  private MainActivity activity;
   private Context context;
   private TessBaseAPI baseApi;
   private ProgressDialog dialog;
@@ -73,7 +73,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
 
   /**
    * AsyncTask to asynchronously download data and initialize Tesseract.
-   * 
+   *
    * @param activity
    *          The calling activity
    * @param baseApi
@@ -89,8 +89,8 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
    * @param ocrEngineMode
    *          Whether to use Tesseract, Cube, or both
    */
-  OcrInitAsyncTask(CaptureActivity activity, TessBaseAPI baseApi, ProgressDialog dialog, 
-      ProgressDialog indeterminateDialog, String languageCode, String languageName, 
+  OcrInitAsyncTask(MainActivity activity, TessBaseAPI baseApi, ProgressDialog dialog,
+      ProgressDialog indeterminateDialog, String languageCode, String languageName,
       int ocrEngineMode) {
     this.activity = activity;
     this.context = activity.getBaseContext();
@@ -117,7 +117,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
   /**
    * In background thread, perform required setup, and request initialization of
    * the OCR engine.
-   * 
+   *
    * @param params
    *          [0] Pathname for the directory for storing language data files to the SD card
    */
@@ -127,12 +127,12 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
     // Example Tesseract data filename: "eng.traineddata"
     String destinationFilenameBase = languageCode + ".traineddata";
     boolean isCubeSupported = false;
-    for (String s : CaptureActivity.CUBE_SUPPORTED_LANGUAGES) {
+    for (String s : MainActivity.CUBE_SUPPORTED_LANGUAGES) {
       if (s.equals(languageCode)) {
-        isCubeSupported = true;   
+        isCubeSupported = true;
       }
     }
-    destinationFilenameBase = "tesseract-ocr-3.02." + languageCode + ".tar";   
+    destinationFilenameBase = "tesseract-ocr-3.02." + languageCode + ".tar";
 
     // Check for, and create if necessary, folder to hold model data
     String destinationDirBase = params[0]; // The storage directory, minus the
@@ -184,7 +184,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
         Log.d(TAG, "Checking for language data (" + destinationFilenameBase
             + ".zip) in application assets...");
         // Check for a file like "eng.traineddata.zip" or "tesseract-ocr-3.01.eng.tar.zip"
-        installSuccess = installFromAssets(destinationFilenameBase + ".zip", tessdataDir, 
+        installSuccess = installFromAssets(destinationFilenameBase + ".zip", tessdataDir,
             downloadFile);
       } catch (IOException e) {
         Log.e(TAG, "IOException", e);
@@ -213,7 +213,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
           destinationFilenameBase.length());
       if (extension.equals(".tar")) {
         try {
-          untar(new File(tessdataDir.toString() + File.separator + destinationFilenameBase), 
+          untar(new File(tessdataDir.toString() + File.separator + destinationFilenameBase),
               tessdataDir);
           installSuccess = true;
         } catch (IOException e) {
@@ -223,33 +223,33 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
       }
 
     } else {
-      Log.d(TAG, "Language data for " + languageCode + " already installed in " 
+      Log.d(TAG, "Language data for " + languageCode + " already installed in "
           + tessdataDir.toString());
       installSuccess = true;
     }
 
     // If OSD data file is not present, download it
-    File osdFile = new File(tessdataDir, CaptureActivity.OSD_FILENAME_BASE);
+    File osdFile = new File(tessdataDir, MainActivity.OSD_FILENAME_BASE);
     boolean osdInstallSuccess = false;
     if (!osdFile.exists()) {
       // Check assets for language data to install. If not present, download from Internet
       languageName = "orientation and script detection";
       try {
         // Check for, and delete, partially-downloaded OSD files
-        String[] badFiles = { CaptureActivity.OSD_FILENAME + ".gz.download", 
-            CaptureActivity.OSD_FILENAME + ".gz", CaptureActivity.OSD_FILENAME };
+        String[] badFiles = { MainActivity.OSD_FILENAME + ".gz.download",
+            MainActivity.OSD_FILENAME + ".gz", MainActivity.OSD_FILENAME };
         for (String filename : badFiles) {
           File file = new File(tessdataDir, filename);
           if (file.exists()) {
             file.delete();
           }
         }
-        
-        Log.d(TAG, "Checking for OSD data (" + CaptureActivity.OSD_FILENAME_BASE
+
+        Log.d(TAG, "Checking for OSD data (" + MainActivity.OSD_FILENAME_BASE
             + ".zip) in application assets...");
         // Check for "osd.traineddata.zip"
-        osdInstallSuccess = installFromAssets(CaptureActivity.OSD_FILENAME_BASE + ".zip", 
-            tessdataDir, new File(CaptureActivity.OSD_FILENAME));
+        osdInstallSuccess = installFromAssets(MainActivity.OSD_FILENAME_BASE + ".zip",
+            tessdataDir, new File(MainActivity.OSD_FILENAME));
       } catch (IOException e) {
         Log.e(TAG, "IOException", e);
       } catch (Exception e) {
@@ -258,10 +258,10 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
 
       if (!osdInstallSuccess) {
         // File was not packaged in assets, so download it
-        Log.d(TAG, "Downloading " + CaptureActivity.OSD_FILENAME + ".gz...");
+        Log.d(TAG, "Downloading " + MainActivity.OSD_FILENAME + ".gz...");
         try {
-          osdInstallSuccess = downloadFile(CaptureActivity.OSD_FILENAME, new File(tessdataDir, 
-              CaptureActivity.OSD_FILENAME));
+          osdInstallSuccess = downloadFile(MainActivity.OSD_FILENAME, new File(tessdataDir,
+              MainActivity.OSD_FILENAME));
           if (!osdInstallSuccess) {
             Log.e(TAG, "Download failed");
             return false;
@@ -274,7 +274,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
 
       // Untar the OSD tar file
       try {
-        untar(new File(tessdataDir.toString() + File.separator + CaptureActivity.OSD_FILENAME), 
+        untar(new File(tessdataDir.toString() + File.separator + MainActivity.OSD_FILENAME),
             tessdataDir);
       } catch (IOException e) {
         Log.e(TAG, "Untar failed");
@@ -285,7 +285,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
       Log.d(TAG, "OSD file already present in " + tessdataDir.toString());
       osdInstallSuccess = true;
     }
-    
+
     // Dismiss the progress dialog box, revealing the indeterminate dialog box behind it
     try {
       dialog.dismiss();
@@ -301,9 +301,9 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
   }
 
   /**
-   * Delete any existing data files for Cube that are present in the given directory. Files may be 
+   * Delete any existing data files for Cube that are present in the given directory. Files may be
    * partially uncompressed files left over from a failed install, or pre-v3.01 traineddata files.
-   * 
+   *
    * @param tessdataDir
    *          Directory to delete the files from
    */
@@ -315,7 +315,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
         Log.d(TAG, "Deleting existing file " + badFile.toString());
         badFile.delete();
       }
-      badFile = new File(tessdataDir.toString() + File.separator + "tesseract-ocr-3.01." 
+      badFile = new File(tessdataDir.toString() + File.separator + "tesseract-ocr-3.01."
           + languageCode + ".tar");
       if (badFile.exists()) {
         Log.d(TAG, "Deleting existing file " + badFile.toString());
@@ -326,7 +326,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
 
   /**
    * Download a file from the site specified by DOWNLOAD_BASE, and gunzip to the given destination.
-   * 
+   *
    * @param sourceFilenameBase
    *          Name of file to download, minus the required ".gz" extension
    * @param destinationFile
@@ -337,8 +337,8 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
   private boolean downloadFile(String sourceFilenameBase, File destinationFile)
       throws IOException {
     try {
-      return downloadGzippedFileHttp(new URL(CaptureActivity.DOWNLOAD_BASE + sourceFilenameBase + 
-          ".gz"), 
+      return downloadGzippedFileHttp(new URL(MainActivity.DOWNLOAD_BASE + sourceFilenameBase +
+          ".gz"),
           destinationFile);
     } catch (MalformedURLException e) {
       throw new IllegalArgumentException("Bad URL string.");
@@ -346,8 +346,8 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
   }
 
   /**
-   * Download a gzipped file using an HttpURLConnection, and gunzip it to the given destination. 
-   * 
+   * Download a gzipped file using an HttpURLConnection, and gunzip it to the given destination.
+   *
    * @param url
    *          URL to download from
    * @param destinationFile
@@ -424,7 +424,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
   /**
    * Unzips the given Gzipped file to the given destination, and deletes the
    * gzipped file.
-   * 
+   *
    * @param zippedFile
    *          The gzipped file to be uncompressed
    * @param outFilePath
@@ -481,7 +481,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
 
   /**
    * Returns the uncompressed size for a Gzipped file.
-   * 
+   *
    * @param file
    *          Gzipped file to get the size for
    * @return Size when uncompressed, in bytes
@@ -501,9 +501,9 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
   /**
    * Untar the contents of a tar file into the given directory, ignoring the
    * relative pathname in the tar file, and delete the tar file.
-   * 
+   *
    * Uses jtar: http://code.google.com/p/jtar/
-   * 
+   *
    * @param tarFile
    *          The tar file to be untarred
    * @param destinationDir
@@ -541,7 +541,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
         percentComplete = (int) ((unzippedBytes / (float) uncompressedSize) * progressMax)
             + progressMin;
         if (percentComplete > percentCompleteLast) {
-          publishProgress("Uncompressing data for " + languageName + "...", 
+          publishProgress("Uncompressing data for " + languageName + "...",
               percentComplete.toString());
           percentCompleteLast = percentComplete;
         }
@@ -555,10 +555,10 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
       tarFile.delete();
     }
   }
-  
+
   /**
    * Return the uncompressed size for a Tar file.
-   * 
+   *
    * @param tarFile
    *          The Tarred file
    * @return Size when uncompressed, in bytes
@@ -580,7 +580,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
 
   /**
    * Install a file from application assets to device external storage.
-   * 
+   *
    * @param sourceFilename
    *          File in assets to install
    * @param modelRoot
@@ -592,7 +592,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
    */
   private boolean installFromAssets(String sourceFilename, File modelRoot,
       File destinationFile) throws IOException {
-    String extension = sourceFilename.substring(sourceFilename.lastIndexOf('.'), 
+    String extension = sourceFilename.substring(sourceFilename.lastIndexOf('.'),
         sourceFilename.length());
     try {
       if (extension.equals(".zip")) {
@@ -610,7 +610,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
   /**
    * Unzip the given Zip file, located in application assets, into the given
    * destination file.
-   * 
+   *
    * @param sourceFilename
    *          Name of the file in assets
    * @param destinationDir
@@ -657,7 +657,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
           unzippedSize += count;
           percentComplete = (int) ((unzippedSize / (long) zippedFileSize) * 100);
           if (percentComplete > percentCompleteLast) {
-            publishProgress("Uncompressing data for " + languageName + "...", 
+            publishProgress("Uncompressing data for " + languageName + "...",
                 percentComplete.toString(), "0");
             percentCompleteLast = percentComplete;
           }
@@ -672,7 +672,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
 
   /**
    * Update the dialog box with the latest incremental progress.
-   * 
+   *
    * @param message
    *          [0] Text to be displayed
    * @param message
@@ -692,7 +692,7 @@ final class OcrInitAsyncTask extends AsyncTask<String, String, Boolean> {
   @Override
   protected void onPostExecute(Boolean result) {
     super.onPostExecute(result);
-    
+
     try {
       indeterminateDialog.dismiss();
     } catch (IllegalArgumentException e) {
