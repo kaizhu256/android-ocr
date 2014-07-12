@@ -2725,16 +2725,7 @@ OnSharedPreferenceChangeListener {
  */
 class Translator {
   public static final String BAD_TRANSLATION_MSG = "[Translation unavailable]";
-  static String translate(Activity activity, String sourceLanguageCode, String targetLanguageCode, String sourceText) {
-    return TranslatorBing.translate("en", "zh-CHT", sourceText);
-  }
-}
-
-
-
-
-class TranslatorBing {
-  private static final String TAG = TranslatorBing.class.getSimpleName();
+  private static final String TAG = "Translator";
 
   /**
    *  Translate using Microsoft Translate API
@@ -2823,7 +2814,7 @@ class TranslateAsyncTask extends AsyncTask < String, String, Boolean > {
   @
   Override
   protected Boolean doInBackground(String...arg0) {
-    translatedText = Translator.translate(activity, sourceLanguageCode, targetLanguageCode, sourceText);
+    translatedText = Translator.translate("en", "zh-CHT", sourceText);
 
     // Check for failed translations.
     if (translatedText.equals(Translator.BAD_TRANSLATION_MSG)) {
