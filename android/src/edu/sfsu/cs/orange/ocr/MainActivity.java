@@ -73,6 +73,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.googlecode.leptonica.android.ReadFile;
+import com.googlecode.leptonica.android.Rotate;
 import com.googlecode.tesseract.android.TessBaseAPI;
 import com.memetix.mst.language.Language;
 import com.memetix.mst.translate.Translate;
@@ -2462,7 +2463,7 @@ class DecodeHandler extends Handler {
     long start = System.currentTimeMillis();
 
     try {
-      baseApi.setImage(ReadFile.readBitmap(bitmap));
+      baseApi.setImage(Rotate.rotate(ReadFile.readBitmap(bitmap), 0));
       textResult = baseApi.getUTF8Text();
       timeRequired = System.currentTimeMillis() - start;
 
