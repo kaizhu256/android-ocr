@@ -73,7 +73,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.googlecode.leptonica.android.ReadFile;
-import com.googlecode.leptonica.android.Rotate;
 import com.googlecode.tesseract.android.TessBaseAPI;
 import com.memetix.mst.language.Language;
 import com.memetix.mst.translate.Translate;
@@ -1177,7 +1176,7 @@ class ViewfinderView extends View {
 
       // Only draw text/bounding boxes on viewfinder if it hasn't been resized since the OCR was requested.
       Point bitmapSize = resultText.getBitmapDimensions();
-      previewFrame = cameraManager.getFramingRectInPreview();
+      previewFrame = cameraManager.getFramingRect();
       if (bitmapSize.x == previewFrame.width() && bitmapSize.y == previewFrame.height()) {
 
 
@@ -1562,7 +1561,7 @@ class CameraConfigurationManager {
     int height = display.getHeight();
     screenResolution = new Point(width, height);
     Log.i(TAG, "Screen resolution: " + screenResolution);
-    cameraResolution = findBestPreviewSizeValue(parameters, screenResolution);
+    cameraResolution = new Point(640, 480);
     Log.i(TAG, "Camera resolution: " + cameraResolution);
   }
 
@@ -1604,64 +1603,6 @@ class CameraConfigurationManager {
 
   Point getCameraResolution() {
     return cameraResolution;
-  }
-
-  Point getScreenResolution() {
-    return screenResolution;
-  }
-
-  private Point findBestPreviewSizeValue(Camera.Parameters parameters, Point screenResolution) {
-
-    // Sort by size, descending
-    List < Camera.Size > supportedPreviewSizes = new ArrayList < Camera.Size > (parameters.getSupportedPreviewSizes());
-    Collections.sort(supportedPreviewSizes, new Comparator < Camera.Size > () {@
-      Override
-      public int compare(Camera.Size a, Camera.Size b) {
-        int aPixels = a.height * a.width;
-        int bPixels = b.height * b.width;
-        if (bPixels < aPixels) {
-          return -1;
-        }
-        if (bPixels > aPixels) {
-          return 1;
-        }
-        return 0;
-      }
-    });
-
-    if (Log.isLoggable(TAG, Log.INFO)) {
-      StringBuilder previewSizesString = new StringBuilder();
-      for (Camera.Size supportedPreviewSize: supportedPreviewSizes) {
-        previewSizesString.append(supportedPreviewSize.width).append('x')
-          .append(supportedPreviewSize.height).append(' ');
-      }
-      Log.i(TAG, "Supported preview sizes: " + previewSizesString);
-    }
-
-    Point bestSize = null;
-    float screenAspectRatio = (float) screenResolution.x / (float) screenResolution.y;
-
-    float diff = Float.POSITIVE_INFINITY;
-    for (Camera.Size supportedPreviewSize: supportedPreviewSizes) {
-      int realWidth = supportedPreviewSize.width;
-      int realHeight = supportedPreviewSize.height;
-      int pixels = realWidth * realHeight;
-      if (pixels < MIN_PREVIEW_PIXELS || pixels > MAX_PREVIEW_PIXELS) {
-        continue;
-      }
-      Point exactPoint = new Point(realWidth, realHeight);
-      Log.i(TAG, "Found preview size exactly matching screen size: " + exactPoint);
-      return exactPoint;
-    }
-
-    if (bestSize == null) {
-      Camera.Size defaultSize = parameters.getPreviewSize();
-      bestSize = new Point(defaultSize.width, defaultSize.height);
-      Log.i(TAG, "No suitable preview sizes, using default: " + bestSize);
-    }
-
-    Log.i(TAG, "Found best approximate preview size: " + bestSize);
-    return bestSize;
   }
 
   private static String findSettableValue(Collection < String > supportedValues,
@@ -1865,17 +1806,6 @@ class CameraManager {
   }
 
   /**
-   * Like {@link #getFramingRect} but coordinates are in terms of the preview frame,
-   * not UI / screen.
-   */
-  public synchronized Rect getFramingRectInPreview() {
-    if (framingRect == null) {
-      framingRect = new Rect(160, 90, 480, 270);
-    }
-    return framingRect;
-  }
-
-  /**
    * A factory method to build the appropriate LuminanceSource object based on the format
    * of the preview buffers, as described by Camera.Parameters.
    *
@@ -1885,7 +1815,7 @@ class CameraManager {
    * @return A PlanarYUVLuminanceSource instance.
    */
   public PlanarYUVLuminanceSource buildLuminanceSource(byte[] data, int width, int height) {
-    Rect rect = getFramingRectInPreview();
+    Rect rect = getFramingRect();
     if (rect == null) {
       return null;
     }
@@ -2463,7 +2393,6 @@ class DecodeHandler extends Handler {
     long start = System.currentTimeMillis();
 
     try {
-      baseApi.setImage(Rotate.rotate(ReadFile.readBitmap(bitmap), 0));
       textResult = baseApi.getUTF8Text();
       timeRequired = System.currentTimeMillis() - start;
 
