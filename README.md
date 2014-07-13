@@ -1,5 +1,11 @@
-#android-ocr
+#glass-ocr
 * * *
+
+![](https://raw.githubusercontent.com/kaizhu256/glass-ocr/master/screenshot1.png)
+![](https://raw.githubusercontent.com/kaizhu256/glass-ocr/master/screenshot5.png)
+![](https://raw.githubusercontent.com/kaizhu256/glass-ocr/master/screenshot2.png)
+![](https://raw.githubusercontent.com/kaizhu256/glass-ocr/master/screenshot3.png)
+![](https://raw.githubusercontent.com/kaizhu256/glass-ocr/master/screenshot4.png)
 
 An experimental app for Android that performs optical character recognition (OCR) on images captured using the device camera.
 
