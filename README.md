@@ -1,7 +1,7 @@
 #glass-ocr
 * * *
 
-![](https://raw.githubusercontent.com/kaizhu256/glass-ocr/master/screenshot6.png)
+![](https://raw.githubusercontent.com/kaizhu256/glass-ocr/master/screenshot6.jpg)
 ![](https://raw.githubusercontent.com/kaizhu256/glass-ocr/master/screenshot1.png)
 ![](https://raw.githubusercontent.com/kaizhu256/glass-ocr/master/screenshot5.png)
 ![](https://raw.githubusercontent.com/kaizhu256/glass-ocr/master/screenshot2.png)
