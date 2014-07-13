@@ -35,7 +35,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.hardware.Camera;
 import android.os.AsyncTask;
@@ -55,8 +54,6 @@ import android.text.style.ForegroundColorSpan;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -84,13 +81,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.concurrent.CountDownLatch;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.Timer;
 import java.util.TimerTask;
 // import WindowUtils for voice commands
+import com.google.android.glass.touchpad.Gesture;
+import com.google.android.glass.touchpad.GestureDetector;
 import com.google.android.glass.view.WindowUtils;
 
 /**
@@ -219,6 +217,68 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
     private boolean isPaused;
     private static boolean isFirstLaunch; // True if this is the first time the app is being run
 
+    Logger log = Logger.getLogger("MainActivity");
+    private GestureDetector mGestureDetector;
+
+    private GestureDetector createGestureDetector(Context context) {
+    GestureDetector gestureDetector = new GestureDetector(context);
+        //Create a base listener for generic gestures
+        gestureDetector.setBaseListener( new GestureDetector.BaseListener() {
+            @Override
+            public boolean onGesture(Gesture gesture) {
+                log.info(gesture.name());
+                if (gesture == Gesture.TAP) {
+                    // do something on tap
+                    if (isContinuousModeActive) {
+                      onShutterButtonPressContinuous();
+                    } else {
+                      handler.hardwareShutterButtonClick();
+                    }
+                    return true;
+                } else if (gesture == Gesture.TWO_TAP) {
+                    // do something on two finger tap
+                    return true;
+                } else if (gesture == Gesture.SWIPE_RIGHT) {
+                    // do something on right (forward) swipe
+                    findViewById(R.id.scroll_result_text_view).scrollBy(0, 180);
+                    log.info("scroll right");
+                    return true;
+                } else if (gesture == Gesture.SWIPE_LEFT) {
+                    // do something on left (backwards) swipe
+                    findViewById(R.id.scroll_result_text_view).scrollBy(0, -180);
+                    log.info("scroll left");
+                    return true;
+                }
+                return false;
+            }
+        });
+        //!! gestureDetector.setFingerListener(new GestureDetector.FingerListener() {
+            //!! @Override
+            //!! public void onFingerCountChanged(int previousCount, int currentCount) {
+              //!! // do something on finger count changes
+            //!! }
+        //!! });
+        //!! gestureDetector.setScrollListener(new GestureDetector.ScrollListener() {
+            //!! @Override
+            //!! public boolean onScroll(float displacement, float delta, float velocity) {
+                //!! // do something on scrolling
+            //!! }
+        //!! });
+        return gestureDetector;
+    }
+
+    /*
+     * Send generic motion events to the gesture detector
+     */
+    @Override
+    public boolean onGenericMotionEvent(MotionEvent event) {
+        if (mGestureDetector != null) {
+            return mGestureDetector.onMotionEvent(event);
+        }
+        return false;
+    }
+
+
     Handler getHandler() {
       return handler;
     }
@@ -255,9 +315,7 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
       resultView = findViewById(R.id.result_view);
 
       statusViewBottom = (TextView) findViewById(R.id.status_view_bottom);
-      registerForContextMenu(statusViewBottom);
       statusViewTop = (TextView) findViewById(R.id.status_view_top);
-      registerForContextMenu(statusViewTop);
 
       handler = null;
       lastResult = null;
@@ -270,15 +328,15 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
       }
 
       ocrResultView = (TextView) findViewById(R.id.ocr_result_text_view);
-      registerForContextMenu(ocrResultView);
       translationView = (TextView) findViewById(R.id.translation_text_view);
-      registerForContextMenu(translationView);
 
       progressView = (View) findViewById(R.id.indeterminate_progress_indicator_view);
 
       cameraManager = new CameraManager(getApplication());
       viewfinderView.setCameraManager(cameraManager);
       isEngineReady = false;
+
+      mGestureDetector = createGestureDetector(this);
     }
 
     @
@@ -481,7 +539,8 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
           }
           return true;
         }
-      } else if (keyCode == KeyEvent.KEYCODE_CAMERA) {
+      // capture image for ocr on camera key or glass tap
+      } else if (keyCode == KeyEvent.KEYCODE_CAMERA || keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
         if (isContinuousModeActive) {
           onShutterButtonPressContinuous();
         } else {
@@ -771,20 +830,6 @@ public final class MainActivity extends Activity implements SurfaceHolder.Callba
         text = ssb;
       }
       return text;
-    }
-
-    @
-    Override
-    public void onCreateContextMenu(ContextMenu menu, View v,
-      ContextMenuInfo menuInfo) {
-      super.onCreateContextMenu(menu, v, menuInfo);
-      if (v.equals(ocrResultView)) {
-        menu.add(Menu.NONE, OPTIONS_COPY_RECOGNIZED_TEXT_ID, Menu.NONE, "Copy recognized text");
-        menu.add(Menu.NONE, OPTIONS_SHARE_RECOGNIZED_TEXT_ID, Menu.NONE, "Share recognized text");
-      } else if (v.equals(translationView)) {
-        menu.add(Menu.NONE, OPTIONS_COPY_TRANSLATED_TEXT_ID, Menu.NONE, "Copy translated text");
-        menu.add(Menu.NONE, OPTIONS_SHARE_TRANSLATED_TEXT_ID, Menu.NONE, "Share translated text");
-      }
     }
 
     @
@@ -1194,21 +1239,6 @@ class ViewfinderView extends View {
     canvas.drawRect(frame.left, frame.top + 2, frame.left + 2, frame.bottom - 1, paint);
     canvas.drawRect(frame.right - 1, frame.top, frame.right + 1, frame.bottom - 1, paint);
     canvas.drawRect(frame.left, frame.bottom - 1, frame.right + 1, frame.bottom + 1, paint);
-
-    // Draw the framing rect corner UI elements
-    paint.setColor(cornerColor);
-    canvas.drawRect(frame.left - 15, frame.top - 15, frame.left + 15, frame.top, paint);
-    canvas.drawRect(frame.left - 15, frame.top, frame.left, frame.top + 15, paint);
-    canvas.drawRect(frame.right - 15, frame.top - 15, frame.right + 15, frame.top, paint);
-    canvas.drawRect(frame.right, frame.top - 15, frame.right + 15, frame.top + 15, paint);
-    canvas.drawRect(frame.left - 15, frame.bottom, frame.left + 15, frame.bottom + 15, paint);
-    canvas.drawRect(frame.left - 15, frame.bottom - 15, frame.left, frame.bottom, paint);
-    canvas.drawRect(frame.right - 15, frame.bottom, frame.right + 15, frame.bottom + 15, paint);
-    canvas.drawRect(frame.right, frame.bottom - 15, frame.right + 15, frame.bottom + 15, paint);
-
-
-    // Request another update at the animation interval, but don't repaint the entire viewfinder mask.
-    //postInvalidateDelayed(ANIMATION_DELAY, frame.left, frame.top, frame.right, frame.bottom);
   }
 
   public void drawViewfinder() {
@@ -1801,7 +1831,7 @@ class CameraManager {
    */
   public synchronized Rect getFramingRect() {
     if (framingRect == null) {
-      framingRect = new Rect(160, 90, 480, 270);
+      framingRect = new Rect(160, 120, 480, 240);
     }
     return framingRect;
   }
@@ -1816,7 +1846,7 @@ class CameraManager {
    * @return A PlanarYUVLuminanceSource instance.
    */
   public PlanarYUVLuminanceSource buildLuminanceSource(byte[] data, int width, int height) {
-    Rect rect = new Rect(320, 180, 960, 540);
+    Rect rect = new Rect(320, 240, 960, 480);
     if (rect == null) {
       return null;
     }
@@ -2264,7 +2294,7 @@ class TranslateAsyncTask extends AsyncTask < String, String, Boolean > {
       if (targetLanguageTextView != null) {
         targetLanguageTextView.setTypeface(Typeface.defaultFromStyle(Typeface.NORMAL), Typeface.NORMAL);
       }
-      textView.setText(translatedText);
+      textView.setText(translatedText + "\n\n");
       textView.setVisibility(View.VISIBLE);
       textView.setTextColor(activity.getResources().getColor(R.color.translation_text));
 
