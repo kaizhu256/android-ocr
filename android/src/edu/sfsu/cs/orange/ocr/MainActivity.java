@@ -1561,7 +1561,8 @@ class CameraConfigurationManager {
     int height = display.getHeight();
     screenResolution = new Point(width, height);
     Log.i(TAG, "Screen resolution: " + screenResolution);
-    cameraResolution = new Point(640, 480);
+    // cameraResolution = new Point(640, 480);
+    cameraResolution = new Point(1280, 960);
     Log.i(TAG, "Camera resolution: " + cameraResolution);
   }
 
@@ -1815,7 +1816,7 @@ class CameraManager {
    * @return A PlanarYUVLuminanceSource instance.
    */
   public PlanarYUVLuminanceSource buildLuminanceSource(byte[] data, int width, int height) {
-    Rect rect = getFramingRect();
+    Rect rect = new Rect(320, 180, 960, 540);
     if (rect == null) {
       return null;
     }
